@@ -26,6 +26,7 @@ dist/
 pipeline/raw/         # raw data files (e.g. ha*.json)
 pipeline/parsed/      # generated JSONL chunks
 pipeline/embeddings/  # any embedding caches
+pipeline/debug/       # debug data and logs
 
 # ─── Docker (runtime only) ────────────────────────────────
 *.pid
