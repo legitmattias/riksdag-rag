@@ -23,7 +23,8 @@ yarn-error.log*
 dist/
 
 # ─── Pipeline ─────────────────────────────────────────────
-pipeline/raw/
+pipeline/raw/*
+!pipeline/raw/
 pipeline/parsed/
 pipeline/embeddings/
 pipeline/debug/
