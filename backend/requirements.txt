@@ -1,0 +1,11 @@
+# backend/requirements.txt
+
+# FastAPI + backend
+fastapi
+uvicorn
+pydantic
+
+# MongoDB + parsing
+pymongo
+beautifulsoup4
+tqdm
