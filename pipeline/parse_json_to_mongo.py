@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RAW_DATA_DIR = os.path.join(BASE_DIR, "raw")
 DEBUG_OUTPUT_DIR = os.path.join(BASE_DIR, "debug")
 os.makedirs(DEBUG_OUTPUT_DIR, exist_ok=True)
-DEBUG_FILES = {'ha091.json', 'ha0910.json'}
+DEBUG_FILES = {'ha0912.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'ha0950.json', 'ha0994.json', 'ha0962.json'}
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client.riksdagen
@@ -34,7 +34,13 @@ def clean_html(raw_html):
     # Normalize white spaces (condense multiple spaces into one)
     text = re.sub(r"\s+", " ", text).strip()
 
-    text = clean_numbers(text)
+    # Concatenate digits that are separated by a single space
+    text = re.sub(r"(\d) (\d+)(?=\s|$)", r"\1\2", text)  # Concatenate numbers split by a single space
+
+    # Remove space after § (fix formatting for clauses)
+    text = re.sub(r"§\s(\d)", r"§\1", text)  # Remove space after § symbol before clause number
+    
+    text = clean_numbers
     
     return text
 
