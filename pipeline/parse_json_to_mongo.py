@@ -35,7 +35,6 @@ def clean_html(raw_html):
     text = re.sub(r"\s+", " ", text).strip()
 
     # Concatenate digits that are split by spaces
-    text = re.sub(r"(\d) (\d+)(?=\s|$)", r"\1\2", text)  # Combine numbers split by single space
     text = re.sub(r"(\d+)(?=\s+(\d+))+(\s|$)", r"\1", text)  # Merge multi-part numbers
 
     # Remove space after § (fix formatting for clauses)
