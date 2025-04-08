@@ -3,7 +3,7 @@
 import os
 import json
 import re
-import unicodedata
+import argparse
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
 from tqdm import tqdm
@@ -11,12 +11,12 @@ from tqdm import tqdm
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RAW_DATA_DIR = os.path.join(BASE_DIR, "raw")
 DEBUG_OUTPUT_DIR = os.path.join(BASE_DIR, "debug")
-os.makedirs(DEBUG_OUTPUT_DIR, exist_ok=True)
-DEBUG_FILES = {'ha0912.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'ha0950.json', 'ha0994.json', 'ha0962.json'}
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client.riksdagen
 collection = db.speeches
+
+DEBUG_FILES = {'ha091.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'ha0950.json', 'ha0994.json', 'ha0962.json'}
 
 def clean_html(raw_html):
     soup = BeautifulSoup(raw_html, "html.parser")
@@ -34,35 +34,21 @@ def clean_html(raw_html):
     # Normalize white spaces (condense multiple spaces into one)
     text = re.sub(r"\s+", " ", text).strip()
 
-    # Concatenate digits that are separated by a single space
-    text = re.sub(r"(\d) (\d+)(?=\s|$)", r"\1\2", text)  # Concatenate numbers split by a single space
-
-    # Remove space after § (fix formatting for clauses)
-    text = re.sub(r"§\s(\d)", r"§\1", text)  # Remove space after § symbol before clause number
-    
-    text = clean_numbers
-    
-    return text
-
-def clean_numbers(text):
     # Concatenate digits that are split by spaces
     text = re.sub(r"(\d) (\d+)(?=\s|$)", r"\1\2", text)  # Combine numbers split by single space
     text = re.sub(r"(\d+)(?=\s+(\d+))+(\s|$)", r"\1", text)  # Merge multi-part numbers
+
+    # Remove space after § (fix formatting for clauses)
+    text = re.sub(r"§\s(\d)", r"§\1", text)  # Remove space after § symbol before clause number
+
+    # Handle special characters:
+    text = text.replace("\u2212", "-")             # Replace Minus Sign (U+2212) with regular hyphen
+    text = text.replace("\u200B", "")          # Remove Zero Width Space (U+200B)
+    text = text.replace("\uF0B7", " ")         # Replace Unknown Character (U+F0B7) with space (or remove)
+       
     return text
 
-def get_suspicious_chars(text):
-  return [
-    {"char": c, "code": f"U+{ord(c):04X}", "name": unicodedata.name(c, "UNKNOWN")}
-    for c in text
-    if (
-      ord(c) < 32 and c not in '\n\t'  # ASCII control chars
-      or unicodedata.category(c).startswith("C")  # other control chars
-      or unicodedata.category(c) in {"Zl", "Zp"}  # line/paragraph separators
-      or c in {'\u00A0', '\u200B', '\u200C', '\u200D', '\uFEFF'}
-    )
-  ]
-
-def process_file(file_path):
+def process_file(file_path, debug=False):
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -86,22 +72,30 @@ def process_file(file_path):
         "source_file": os.path.basename(file_path),
     }
 
-    if os.path.basename(file_path) in DEBUG_FILES:
-      debug_path = os.path.join(DEBUG_OUTPUT_DIR, os.path.basename(file_path) + ".parsed.json")
-      with open(debug_path, 'w', encoding='utf-8') as out:
-          json.dump({
-              "doc": doc,
-              "suspicious_chars": get_suspicious_chars(cleaned_text)
-          }, out, ensure_ascii=False, indent=2)
+    if debug and os.path.basename(file_path) in DEBUG_FILES:
+        os.makedirs(DEBUG_OUTPUT_DIR, exist_ok=True)  # Create debug folder if debug is enabled
+        debug_path = os.path.join(DEBUG_OUTPUT_DIR, os.path.basename(file_path) + ".parsed.json")
+        with open(debug_path, 'w', encoding='utf-8') as out:
+            json.dump({
+                "doc": doc,
+            }, out, ensure_ascii=False, indent=2)
 
-
+    # Insert data into MongoDB
     collection.update_one({"dok_id": doc["dok_id"]}, {"$set": doc}, upsert=True)
 
-
-if __name__ == "__main__":
+def main(debug=False):
     files = [f for f in os.listdir(RAW_DATA_DIR) if f.endswith(".json")]
     for file_name in tqdm(files, desc="Parsing files"):
         full_path = os.path.join(RAW_DATA_DIR, file_name)
-        process_file(full_path)
+        process_file(full_path, debug)
 
     print("✅ Done. Speeches loaded into MongoDB.")
+
+if __name__ == "__main__":
+    # Add argument parser for --debug flag
+    parser = argparse.ArgumentParser(description="Parse protocol data and load into MongoDB.")
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode to output parsed data to the debug folder.")
+    args = parser.parse_args()
+
+    # Run main function with debug flag
+    main(debug=args.debug)
