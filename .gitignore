@@ -23,10 +23,10 @@ yarn-error.log*
 dist/
 
 # ─── Pipeline ─────────────────────────────────────────────
-pipeline/raw/         # raw data files (e.g. ha*.json)
-pipeline/parsed/      # generated JSONL chunks
-pipeline/embeddings/  # any embedding caches
-pipeline/debug/       # debug data and logs
+pipeline/raw/
+pipeline/parsed/
+pipeline/embeddings/
+pipeline/debug/
 
 # ─── Docker (runtime only) ────────────────────────────────
 *.pid
