@@ -1,0 +1,45 @@
+# ─── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.log
+.venv/
+venv/
+
+# ─── VS Code & System ─────────────────────────────────────
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ─── Node ─────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.svelte-kit/
+.build/
+dist/
+
+# ─── Pipeline ─────────────────────────────────────────────
+pipeline/raw/         # raw data files (e.g. ha*.json)
+pipeline/parsed/      # generated JSONL chunks
+pipeline/embeddings/  # any embedding caches
+
+# ─── Docker (runtime only) ────────────────────────────────
+*.pid
+*.sock
+docker-compose.override.yml
+
+# ─── Secrets ──────────────────────────────────────────────
+.env
+.env.local
+.env.dev
+.env.prod
+!*.example
+
+# ─── Misc ─────────────────────────────────────────────────
+*.sqlite3
+*.db
+*.bak
