@@ -22,6 +22,8 @@ collection = db.speeches
 DEBUG_FILES = {'ha0939.json'}
 """ DEBUG_FILES = {'ha091.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'ha0950.json', 'ha0994.json', 'ha0962.json'} """
 
+summaries = []
+
 # Clean and normalize raw HTML content and inject parsing markers
 def clean_html(raw_html):
     soup = BeautifulSoup(raw_html, "html.parser")
@@ -197,6 +199,13 @@ def process_file(file_path, debug=False):
                 ensure_ascii=False,
                 indent=2,
             )
+    
+    # Summary print for every file (even outside debug mode)
+    summaries.append({
+    "file": os.path.basename(file_path),
+    "clauses": len(clauses),
+    "speeches": len(all_speeches)
+})
 
 # Run parsing across all .json protocol files
 def main(debug=False):
@@ -205,6 +214,10 @@ def main(debug=False):
         full_path = os.path.join(RAW_DATA_DIR, file_name)
         process_file(full_path, debug)
     print("✅ Done. Speeches extracted and stored in MongoDB.")
+    print("\nParsing Summary:")
+    for summary in summaries:
+      print(f"{summary['file']} → {summary['clauses']} clauses, {summary['speeches']} speeches")
+
 
 # CLI entry point
 if __name__ == "__main__":
