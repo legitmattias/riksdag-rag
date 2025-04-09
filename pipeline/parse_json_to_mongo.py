@@ -37,9 +37,6 @@ def clean_html(raw_html):
     # Concatenate digits that are split by spaces
     text = re.sub(r"(\d+)(?=\s+(\d+))+(\s|$)", r"\1", text)  # Merge multi-part numbers
 
-    # Remove space after § (fix formatting for clauses)
-    text = re.sub(r"§\s(\d)", r"§\1", text)  # Remove space after § symbol before clause number
-
     # Handle special characters:
     text = text.replace("\u2212", "-")             # Replace Minus Sign (U+2212) with regular hyphen
     text = text.replace("\u200B", "")          # Remove Zero Width Space (U+200B)
