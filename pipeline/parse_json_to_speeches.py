@@ -19,10 +19,34 @@ db = client.riksdagen
 collection = db.speeches
 
 # Specify files to include in debug output
-""" DEBUG_FILES = {'ha091.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'hb0950.json', 'hb0994.json', 'hb0962.json'} """
-DEBUG_FILES = {'ha092.json', 'ha0927.json', 'ha0940.json', 'ha0945.json', 'ha0974.json', 'ha0987.json', 'ha09122.json', 'ha0951.json', 'ha0995.json', 'hb09122.json', 'hb091.json', 'hc0910.json', 'hb0939.json'}
+""" DEBUG_FILES = {'ha091.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'hb0950.json', 'hb0994.json', 'hb0962.json', "hb0939.json"} """
+DEBUG_FILES = {
+    "ha092.json",
+    "ha0927.json",
+    "ha0940.json",
+    "ha0945.json",
+    "ha0974.json",
+    "ha0987.json",
+    "ha09122.json",
+    "ha0951.json",
+    "ha0995.json",
+    "hb09122.json",
+    "hb091.json",
+    "hc0910.json",
+    "hb0939.json",
+}
+# DEBUG_FILES = {"hb0939.json"}
 
+# Summaries for debug print
 summaries = []
+
+# Neutral speakers without party affiliation
+NEUTRAL_SPEAKERS = [
+    "TALMANNEN",
+    "ANDRE VICE TALMANNEN",
+    "TREDJE VICE TALMANNEN",
+    "HANS MAJESTÄT KONUNGEN"
+]
 
 
 # Clean and normalize raw HTML content and inject parsing markers
@@ -55,6 +79,12 @@ def clean_html(raw_html):
     text = re.sub(r"(\d+)(?=\s+(\d+))+(\s|$)", r"\1", text)
     text = text.replace("\u2212", "-").replace("\u200b", "").replace("\uf0b7", " ")
 
+    # Normalize left and right single quotation marks to straight apostrophes
+    text = text.replace("\u2018", "'").replace("\u2019", "'")
+
+    # Ensure that 'Anf.' always starts on a new line to break clause title greediness
+    text = re.sub(r"(?<!\n)(Anf\.\s*\d+\s+)", r"\n\1", text)
+
     return text
 
 
@@ -74,17 +104,27 @@ def extract_clauses(cleaned_text):
             continue  # Skip repeated clause numbers (usually footer junk)
         seen_clause_numbers.add(clause_number)
 
+        # Get the content between this clause and the next one
         start = match.end()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(cleaned_text)
         clause_content = cleaned_text[start:end].strip()
 
-        # Combine title and content to allow for title/content marker split
+        # Fallback: If there's no <<END_OF_TITLE>> marker, try to insert it before the first Anf.
+        if "<<END_OF_TITLE>>" not in clause_content:
+            clause_content = re.sub(
+                r"(Anf\.\s*\d+\s+)",  # Before first speech marker
+                r"<<END_OF_TITLE>>\1",
+                clause_content,
+                count=1,
+            )
+
+        # Now combine clause title and content for final split
         full_clause_text = clause_title_candidate + "\n" + clause_content
 
         if "<<END_OF_TITLE>>" in full_clause_text:
             clause_title, clause_content = full_clause_text.split("<<END_OF_TITLE>>", 1)
             clause_title = clause_title.strip()
-            clause_content = clause_content.replace("<<END_OF_TITLE>>", "").strip()
+            clause_content = clause_content.strip()
         else:
             clause_title = clause_title_candidate
             clause_content = clause_content.strip()
@@ -103,7 +143,7 @@ def extract_speeches(clause_title, clause_content):
     speech_pattern = (
         r"(?i)"  # Case-insensitive for entire pattern
         r"Anf\.\s*(\d+)\s+"  # Group 1: speech number
-        r"(TALMANNEN|ANDRE VICE TALMANNEN|TREDJE VICE TALMANNEN|[A-ZÅÄÖÉÜ][^:(\n]+?)"  # Group 2: speaker name or role
+        r"([A-ZÅÄÖÉÜ][^:(\n]+?)"  # Group 2: speaker name or role
         r"(?:\s+\((\w+)\))?"  # Group 3 (optional): party in parentheses
         r"(?:\s+\w+)*:"  # Optional trailing tags like "replik:"
     )
@@ -133,6 +173,10 @@ def extract_speeches(clause_title, clause_content):
         speech_number = int(match.group(1))
         speaker = match.group(2).strip().upper()  # Normalize all speaker names
         party = match.group(3) or ""  # Empty string if no party present
+
+        # Remove party if the speaker is a neutral role
+        if speaker in NEUTRAL_SPEAKERS:
+            party = ""
 
         # Add to speech list
         speeches.append(
