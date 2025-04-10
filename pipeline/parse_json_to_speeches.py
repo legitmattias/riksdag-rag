@@ -19,10 +19,11 @@ db = client.riksdagen
 collection = db.speeches
 
 # Specify files to include in debug output
-DEBUG_FILES = {'ha0939.json'}
-""" DEBUG_FILES = {'ha091.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'ha0950.json', 'ha0994.json', 'ha0962.json'} """
+""" DEBUG_FILES = {'ha091.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'hb0950.json', 'hb0994.json', 'hb0962.json'} """
+DEBUG_FILES = {'ha092.json', 'ha0927.json', 'ha0940.json', 'ha0945.json', 'ha0974.json', 'ha0987.json', 'ha09122.json', 'ha0951.json', 'ha0995.json', 'hb09122.json', 'hb091.json', 'hc0910.json', 'hb0939.json'}
 
 summaries = []
+
 
 # Clean and normalize raw HTML content and inject parsing markers
 def clean_html(raw_html):
@@ -33,17 +34,17 @@ def clean_html(raw_html):
     text = re.split(r"Sammanträdet leddes(?:.|\n)*?(?=Vid protokollet|Tryck:)", text)[0]
 
     # DEBUG: Print last 5000 characters for manual inspection
-    #print("\n[DEBUG] Raw text with escape characters:\n", repr(text[:15000]), "\n...\n")
+    # print("\n[DEBUG] Raw text with escape characters:\n", repr(text[:15000]), "\n...\n")
 
     # Insert a marker after clause title if followed by multiple newlines
     text = re.sub(
-        r"(§\s*\d+\s+(?:\(forts\.\)\s*)?[^\n]+)(\n{2,})",
-        r"\1 <<END_OF_TITLE>>\2",
-        text
+        r"(§\s*\d+\s+(?:\(forts\.\)\s*)?[^\n]+)(\n{2,})", r"\1 <<END_OF_TITLE>>\2", text
     )
 
     # Insert marker for speeches that should stop at 'Ajournering'
-    text = re.sub(r"\n\s*Ajournering\s*\n", "\n<<END_OF_SPEECH>>\n", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"\n\s*Ajournering\s*\n", "\n<<END_OF_SPEECH>>\n", text, flags=re.IGNORECASE
+    )
 
     # Normalize newlines and whitespace characters
     text = re.sub(r"\n+", "\n", text)
@@ -55,6 +56,7 @@ def clean_html(raw_html):
     text = text.replace("\u2212", "-").replace("\u200b", "").replace("\uf0b7", " ")
 
     return text
+
 
 # Extract clauses based on '§' headers, with fallback for content edge cases
 def extract_clauses(cleaned_text):
@@ -91,42 +93,59 @@ def extract_clauses(cleaned_text):
 
     return clauses
 
+
 # Extract individual speeches (Anf.) within each clause
 def extract_speeches(clause_title, clause_content):
+    # Regex to match either a standard speaker (with party) or special roles (without party)
+    # Examples:
+    #   Anf. 55 JESSICA ROSENCRANTZ (M):
+    #   Anf. 56 ANDRE VICE TALMANNEN:
     speech_pattern = (
-        r"Anf\.\s*(\d+)\s+(.+?)\s+\((\w+)\)(?:\s+\w+)*:"  # Standard: Anf. 12 NAME (PARTY):
-        r"|Anf\.\s*(\d+)\s+(?i:talmannen):"               # Special case: Anf. 23 TALMANNEN:
+        r"(?i)"  # Case-insensitive for entire pattern
+        r"Anf\.\s*(\d+)\s+"  # Group 1: speech number
+        r"(TALMANNEN|ANDRE VICE TALMANNEN|TREDJE VICE TALMANNEN|[A-ZÅÄÖÉÜ][^:(\n]+?)"  # Group 2: speaker name or role
+        r"(?:\s+\((\w+)\))?"  # Group 3 (optional): party in parentheses
+        r"(?:\s+\w+)*:"  # Optional trailing tags like "replik:"
     )
 
-    full_text = (clause_title + "\n" + clause_content).replace("<<END_OF_TITLE>>", "").strip()
+    # Combine clause title and content, then clean markers
+    full_text = (
+        (clause_title + "\n" + clause_content).replace("<<END_OF_TITLE>>", "").strip()
+    )
+
     speeches = []
     matches = list(re.finditer(speech_pattern, full_text))
 
     for i, match in enumerate(matches):
+        # Get start and end bounds for this speech's content
         start = match.end()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(full_text)
         speech_text = full_text[start:end].strip()
 
+        # Stop at end marker if present
         if "<<END_OF_SPEECH>>" in speech_text:
             speech_text = speech_text.split("<<END_OF_SPEECH>>")[0].strip()
 
-        if match.group(1):  # Standard format
-            speech_number = int(match.group(1))
-            speaker = match.group(2).strip()
-            party = match.group(3)
-        else:  # TALMANNEN format
-            speech_number = int(match.group(4))
-            speaker = "TALMANNEN"
-            party = ""  # Neutral speaker — no party assigned
+        # Clean any leftover marker
+        speech_text = speech_text.replace("<<END_OF_SPEECH>>", "").strip()
 
-        speeches.append({
-            "speech_number": speech_number,
-            "speaker": speaker,
-            "party": party,
-            "text": speech_text
-        })
+        # Extract parsed values from the match
+        speech_number = int(match.group(1))
+        speaker = match.group(2).strip().upper()  # Normalize all speaker names
+        party = match.group(3) or ""  # Empty string if no party present
+
+        # Add to speech list
+        speeches.append(
+            {
+                "speech_number": speech_number,
+                "speaker": speaker,
+                "party": party,
+                "text": speech_text,
+            }
+        )
 
     return speeches
+
 
 # Process a single protocol file
 def process_file(file_path, debug=False):
@@ -199,13 +218,16 @@ def process_file(file_path, debug=False):
                 ensure_ascii=False,
                 indent=2,
             )
-    
+
     # Summary print for every file (even outside debug mode)
-    summaries.append({
-    "file": os.path.basename(file_path),
-    "clauses": len(clauses),
-    "speeches": len(all_speeches)
-})
+    summaries.append(
+        {
+            "file": os.path.basename(file_path),
+            "clauses": len(clauses),
+            "speeches": len(all_speeches),
+        }
+    )
+
 
 # Run parsing across all .json protocol files
 def main(debug=False):
@@ -216,7 +238,9 @@ def main(debug=False):
     print("✅ Done. Speeches extracted and stored in MongoDB.")
     print("\nParsing Summary:")
     for summary in summaries:
-      print(f"{summary['file']} → {summary['clauses']} clauses, {summary['speeches']} speeches")
+        print(
+            f"{summary['file']} → {summary['clauses']} clauses, {summary['speeches']} speeches"
+        )
 
 
 # CLI entry point
