@@ -21,19 +21,7 @@ collection = db.speeches
 # Specify files to include in debug output
 """ DEBUG_FILES = {'ha091.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'hb0950.json', 'hb0994.json', 'hb0962.json', "hb0939.json"} """
 DEBUG_FILES = {
-    "ha092.json",
-    "ha0927.json",
-    "ha0940.json",
-    "ha0945.json",
-    "ha0974.json",
-    "ha0987.json",
-    "ha09122.json",
-    "ha0951.json",
-    "ha0995.json",
-    "hb09122.json",
-    "hb091.json",
-    "hc0910.json",
-    "hb0939.json",
+    "ha09100.json"
 }
 # DEBUG_FILES = {"hb0939.json"}
 
@@ -45,7 +33,7 @@ NEUTRAL_SPEAKERS = [
     "TALMANNEN",
     "ANDRE VICE TALMANNEN",
     "TREDJE VICE TALMANNEN",
-    "HANS MAJESTÄT KONUNGEN"
+    "HANS MAJESTÄT KONUNGEN",
 ]
 
 
@@ -204,15 +192,18 @@ def process_file(file_path, debug=False):
     pdf_info = data.get("dokumentstatus", {}).get("dokbilaga", {}).get("bilaga", {})
 
     # Build base metadata that applies to all speeches from this document
+    raw_date = dokument.get("datum")
+    parsed_date = raw_date.split(" ")[0] if raw_date else None  # Only date - no timestamp
+
     base_meta = {
-        "dok_id": dokument.get("dok_id"),
+        "document_id": dokument.get("dok_id"),
         "hangar_id": dokument.get("hangar_id"),
-        "rm": dokument.get("rm"),
-        "datum": dokument.get("datum"),
-        "titel": dokument.get("titel"),
-        "doktyp": dokument.get("doktyp"),
-        "typ": dokument.get("typ"),
-        "typ_rubrik": dokument.get("typrubrik"),
+        "parliament_year": dokument.get("rm"),
+        "date": parsed_date,
+        "title": dokument.get("titel"),
+        "document_type": dokument.get("doktyp"),
+        "type": dokument.get("typ"),
+        "type_label": dokument.get("typrubrik"),
         "source": {
             "html": dokument.get("dokument_url_html"),
             "pdf": {
@@ -255,7 +246,7 @@ def process_file(file_path, debug=False):
                     "file": os.path.basename(file_path),
                     "total_clauses": len(clauses),
                     "total_speeches": len(all_speeches),
-                    "sample_clauses": clauses,
+                    # "sample_clauses": clauses,
                     "sample_speeches": all_speeches,
                 },
                 out,
