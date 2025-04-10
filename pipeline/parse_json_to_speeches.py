@@ -220,6 +220,10 @@ def process_file(file_path, debug=False):
 
     # Parse all clauses and extract any speeches from each
     clauses = extract_clauses(cleaned_text)
+    
+    # Delete all previous speeches for this document once
+    collection.delete_many({ "document_id": dokument.get("dok_id") })
+    
     for clause_number, clause_title, clause_content in clauses:
         speeches = extract_speeches(clause_title, clause_content)
         for speech in speeches:
