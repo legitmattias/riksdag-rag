@@ -22,6 +22,19 @@ os.makedirs(PARSED_DATA_DIR, exist_ok=True)
 # Clean and normalize raw HTML content and inject parsing markers
 def clean_html(raw_html):
     soup = BeautifulSoup(raw_html, "html.parser")
+
+    # Mark clause title boundaries
+    for h1 in soup.find_all("h1"):
+        if "§" in h1.text:
+            h1.insert_before("<<CLAUSE_TITLE_START>>\n")
+            h1.insert_after("\n<<CLAUSE_TITLE_END>>")
+
+    # Regular speech marker (if needed later)
+    for h2 in soup.find_all("h2"):
+        if "Anf." in h2.text:
+            h2.insert_before("<<SPEECH_START>>\n")
+
+    # Now convert to plain text
     text = soup.get_text(separator="\n")
 
     # Remove all text after the known footer (prevents duplicated clause junk)
@@ -68,27 +81,60 @@ def extract_clauses(cleaned_text):
     for i, match in enumerate(matches):
         clause_number = int(match.group(1))
         clause_title_candidate = match.group(2).strip()
+
         if clause_number in seen_clause_numbers:
-            continue
+            continue  # Skip duplicate clause numbers
         seen_clause_numbers.add(clause_number)
-        # Extract clause body between this and next match
+
+        # Extract clause content between this match and next
         start = match.end()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(cleaned_text)
         clause_content = cleaned_text[start:end].strip()
-        # Ensure clause body gets a marker if not present
-        if "<<END_OF_TITLE>>" not in clause_content:
-            clause_content = re.sub(
-                r"(Anf\.\s*\d+\s+)", r"<<END_OF_TITLE>>\1", clause_content, count=1
+
+        # Try to extract title from new HTML-based markers
+        if (
+            "<<CLAUSE_TITLE_START>>" in clause_content
+            and "<<CLAUSE_TITLE_END>>" in clause_content
+        ):
+            match_title = re.search(
+                r"<<CLAUSE_TITLE_START>>(.*?)<<CLAUSE_TITLE_END>>",
+                clause_content,
+                re.DOTALL,
             )
-        full_clause_text = clause_title_candidate + "\n" + clause_content
-        if "<<END_OF_TITLE>>" in full_clause_text:
-            clause_title, clause_content = full_clause_text.split("<<END_OF_TITLE>>", 1)
-            clause_title = clause_title.strip()
-            clause_content = clause_content.strip()
+            clause_title = (
+                match_title.group(1).strip() if match_title else clause_title_candidate
+            )
+
+            # Remove title section from content
+            clause_content = re.sub(
+                r"<<CLAUSE_TITLE_START>>.*?<<CLAUSE_TITLE_END>>",
+                "",
+                clause_content,
+                flags=re.DOTALL,
+            ).strip()
+
         else:
-            clause_title = clause_title_candidate
-            clause_content = clause_content.strip()
+            # If HTML markers not found, fallback to <<END_OF_TITLE>> pattern
+            if "<<END_OF_TITLE>>" not in clause_content:
+                clause_content = re.sub(
+                    r"(Anf\.\s*\d+\s+)", r"<<END_OF_TITLE>>\1", clause_content, count=1
+                )
+
+            full_clause_text = clause_title_candidate + "\n" + clause_content
+
+            if "<<END_OF_TITLE>>" in full_clause_text:
+                clause_title, clause_content = full_clause_text.split(
+                    "<<END_OF_TITLE>>", 1
+                )
+                clause_title = clause_title.strip()
+                clause_content = clause_content.strip()
+            else:
+                clause_title = clause_title_candidate
+                clause_content = clause_content.strip()
+
+        # Save final cleaned clause
         clauses.append((clause_number, clause_title, clause_content))
+
     return clauses
 
 
