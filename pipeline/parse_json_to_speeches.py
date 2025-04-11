@@ -16,13 +16,12 @@ DEBUG_OUTPUT_DIR = os.path.join(BASE_DIR, "debug")
 # Set up MongoDB connection
 client = MongoClient("mongodb://localhost:27017/")
 db = client.riksdagen
-collection = db.speeches
+speech_collection = db.speeches
+protocols_collection = db.protocols
 
 # Specify files to include in debug output
 """ DEBUG_FILES = {'ha091.json', 'ha0926.json', 'ha0939.json', 'ha0944.json', 'ha0973.json', 'ha0986.json', 'ha09121.json', 'hb0950.json', 'hb0994.json', 'hb0962.json', "hb0939.json"} """
-DEBUG_FILES = {
-    "ha09100.json"
-}
+DEBUG_FILES = {"ha09100.json"}
 # DEBUG_FILES = {"hb0939.json"}
 
 # Summaries for debug print
@@ -193,7 +192,9 @@ def process_file(file_path, debug=False):
 
     # Build base metadata that applies to all speeches from this document
     raw_date = dokument.get("datum")
-    parsed_date = raw_date.split(" ")[0] if raw_date else None  # Only date - no timestamp
+    parsed_date = (
+        raw_date.split(" ")[0] if raw_date else None
+    )  # Only date - no timestamp
 
     base_meta = {
         "document_id": dokument.get("dok_id"),
@@ -220,10 +221,13 @@ def process_file(file_path, debug=False):
 
     # Parse all clauses and extract any speeches from each
     clauses = extract_clauses(cleaned_text)
-    
+
+    # Remove old entries for this protocol
+    protocols_collection.delete_one({"document_id": dokument.get("dok_id")})
+
     # Delete all previous speeches for this document once
-    collection.delete_many({ "document_id": dokument.get("dok_id") })
-    
+    speech_collection.delete_many({"document_id": dokument.get("dok_id")})
+
     for clause_number, clause_title, clause_content in clauses:
         speeches = extract_speeches(clause_title, clause_content)
         for speech in speeches:
@@ -233,8 +237,23 @@ def process_file(file_path, debug=False):
                 "clause_title": clause_title,
                 **speech,
             }
-            collection.insert_one(speech_doc)  # Save to MongoDB
+            speech_collection.insert_one(speech_doc)  # Save to MongoDB
             all_speeches.append(speech_doc)
+
+    clause_info = [{"number": num, "title": title} for num, title, _ in clauses]
+
+    protocol_doc = {
+        "document_id": dokument.get("dok_id"),
+        "title": dokument.get("titel"),
+        "parliament_year": dokument.get("rm"),
+        "date": parsed_date,
+        "num_clauses": len(clauses),
+        "num_speeches": len(all_speeches),
+        "clauses": clause_info,
+    }
+
+    # Store protocol metadata
+    protocols_collection.insert_one(protocol_doc)
 
     # If in debug mode, save a separate .json output with samples
     if debug and os.path.basename(file_path) in DEBUG_FILES:
