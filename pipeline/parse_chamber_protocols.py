@@ -1,7 +1,7 @@
 import os
 import json
 import re
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 from tqdm import tqdm
 
 # Neutral speakers without party affiliation
@@ -15,124 +15,133 @@ NEUTRAL_SPEAKERS = [
 # Define paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RAW_DATA_DIR = os.path.join(BASE_DIR, "./raw")
-PARSED_DATA_DIR = os.path.join(BASE_DIR, "./data/test")
+PARSED_DATA_DIR = os.path.join(BASE_DIR, "./data")
 os.makedirs(PARSED_DATA_DIR, exist_ok=True)
 
 
-# Clean and normalize raw HTML content and inject parsing markers
 def clean_html(raw_html):
     soup = BeautifulSoup(raw_html, "html.parser")
 
-    # Mark clause title boundaries
+    # Insert markers around <h1> elements that contain clause headers
     for h1 in soup.find_all("h1"):
         if "§" in h1.text:
-            h1.insert_before("<<CLAUSE_TITLE_START>>\n")
-            h1.insert_after("\n<<CLAUSE_TITLE_END>>")
+            h1.insert_before(NavigableString("<<CLAUSE_TITLE_BLOCK_START>>\n"))
+            h1.insert_after(NavigableString("\n<<CLAUSE_TITLE_BLOCK_END>>"))
 
-    # Regular speech marker (if needed later)
+    # Insert markers before <h2> elements containing speeches
     for h2 in soup.find_all("h2"):
         if "Anf." in h2.text:
-            h2.insert_before("<<SPEECH_START>>\n")
+            h2.insert_before(NavigableString("<<SPEECH_START>>\n"))
 
-    # Now convert to plain text
+    # Convert full HTML content to plain text
     text = soup.get_text(separator="\n")
 
-    # Remove all text after the known footer (prevents duplicated clause junk)
+    # Remove text after protocol footer
     text = re.split(r"Sammanträdet leddes(?:.|\n)*?(?=Vid protokollet|Tryck:)", text)[0]
 
-    # DEBUG: Print last 5000 characters for manual inspection
-    # print("\n[DEBUG] Raw text with escape characters:\n", repr(text[:15000]), "\n...\n")
-
-    # Insert a marker after clause title if followed by multiple newlines
+    # Add fallback marker between clause title and body based on § header followed by double newlines
     text = re.sub(
-        r"(§\s*\d+\s+(?:\(forts\.\)\s*)?[^\n]+)(\n{2,})", r"\1 <<END_OF_TITLE>>\2", text
+        r"(§\s*\d+\s+(?:\(forts\.\)\s*)?[^\n]+)(\n{2,})",
+        r"\1 <<CLAUSE_TITLE_FALLBACK_BREAK>>\2",
+        text,
     )
 
-    # Insert marker for speeches that should stop at 'Ajournering'
+    # Insert marker to denote end of speech block
     text = re.sub(
         r"\n\s*Ajournering\s*\n", "\n<<END_OF_SPEECH>>\n", text, flags=re.IGNORECASE
     )
 
-    # Normalize newlines and whitespace characters
+    # Normalize excessive newlines to single newlines
     text = re.sub(r"\n+", "\n", text)
+
+    # Replace special characters and dashes with standard ones
     text = text.replace("\xa0", " ").replace("\u2011", "-")
-    text = re.sub(r"\u00AD", "", text)
-    text = re.sub(r"\u2013|\u2014|\u2012|\u2015|\u002D", "-", text)
+    text = re.sub(r"\u00AD", "", text)  # Soft hyphen
+    text = re.sub(r"[\u2013\u2014\u2012\u2015\u002D]", "-", text)
+
+    # Collapse whitespace into single spaces
     text = re.sub(r"\s+", " ", text).strip()
+
+    # Fix formatting of adjacent digits split by whitespace
     text = re.sub(r"(\d+)(?=\s+(\d+))+(\s|$)", r"\1", text)
+
+    # Replace minus and zero-width characters
     text = text.replace("\u2212", "-").replace("\u200b", "").replace("\uf0b7", " ")
 
-    # Normalize left and right single quotation marks to straight apostrophes
+    # Normalize single quotation marks
     text = text.replace("\u2018", "'").replace("\u2019", "'")
 
-    # Ensure that 'Anf.' always starts on a new line to break clause title greediness
+    # Ensure 'Anf.' starts on its own line
     text = re.sub(r"(?<!\n)(Anf\.\s*\d+\s+)", r"\n\1", text)
 
     return text
 
 
 def extract_clauses(cleaned_text):
-    # Extract numbered clauses based on "§" marker
-    header_pattern = r"\u00a7\s*(\d+)\s+([^\n\u00a7]{4,})"
+    # Match clause headers by § + number
+    header_pattern = r"\u00a7\s*(\d+)\s+"
     matches = list(re.finditer(header_pattern, cleaned_text))
+
     clauses = []
     seen_clause_numbers = set()
 
     for i, match in enumerate(matches):
         clause_number = int(match.group(1))
-        clause_title_candidate = match.group(2).strip()
 
         if clause_number in seen_clause_numbers:
-            continue  # Skip duplicate clause numbers
+            continue  # Skip duplicates
         seen_clause_numbers.add(clause_number)
 
-        # Extract clause content between this match and next
-        start = match.end()
+        # Extend start to before <<CLAUSE_TITLE_BLOCK_START>> if possible
+        preamble = cleaned_text[: match.start()]
+        clause_start = preamble.rfind("<<CLAUSE_TITLE_BLOCK_START>>")
+        start = clause_start if clause_start != -1 else match.start()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(cleaned_text)
-        clause_content = cleaned_text[start:end].strip()
+        full_block = cleaned_text[start:end].strip()
 
-        # Try to extract title from new HTML-based markers
-        if (
-            "<<CLAUSE_TITLE_START>>" in clause_content
-            and "<<CLAUSE_TITLE_END>>" in clause_content
-        ):
-            match_title = re.search(
-                r"<<CLAUSE_TITLE_START>>(.*?)<<CLAUSE_TITLE_END>>",
-                clause_content,
-                re.DOTALL,
-            )
-            clause_title = (
-                match_title.group(1).strip() if match_title else clause_title_candidate
-            )
-
-            # Remove title section from content
+        # --- PRIORITY: Try to extract title using HTML markers
+        title_match = re.search(
+            r"<<CLAUSE_TITLE_BLOCK_START>>(.*?)<<CLAUSE_TITLE_BLOCK_END>>",
+            full_block,
+            re.DOTALL,
+        )
+        if title_match:
+            clause_title = title_match.group(1).strip()
+            clause_title = re.sub(
+                r"^§\s*\d+\s*", "", clause_title
+            ).strip()  # Clean "§ X"
             clause_content = re.sub(
-                r"<<CLAUSE_TITLE_START>>.*?<<CLAUSE_TITLE_END>>",
+                r"<<CLAUSE_TITLE_BLOCK_START>>.*?<<CLAUSE_TITLE_BLOCK_END>>",
                 "",
-                clause_content,
+                full_block,
                 flags=re.DOTALL,
             ).strip()
-
         else:
-            # If HTML markers not found, fallback to <<END_OF_TITLE>> pattern
-            if "<<END_OF_TITLE>>" not in clause_content:
+            # --- FALLBACK: Use <<CLAUSE_TITLE_FALLBACK_BREAK>> if no HTML markers found
+            clause_content = full_block
+            if "<<CLAUSE_TITLE_FALLBACK_BREAK>>" not in clause_content:
                 clause_content = re.sub(
-                    r"(Anf\.\s*\d+\s+)", r"<<END_OF_TITLE>>\1", clause_content, count=1
+                    r"(Anf\.\s*\d+\s+)",
+                    r"<<CLAUSE_TITLE_FALLBACK_BREAK>>\1",
+                    clause_content,
+                    count=1,
                 )
 
-            full_clause_text = clause_title_candidate + "\n" + clause_content
-
-            if "<<END_OF_TITLE>>" in full_clause_text:
-                clause_title, clause_content = full_clause_text.split(
-                    "<<END_OF_TITLE>>", 1
+            if "<<CLAUSE_TITLE_FALLBACK_BREAK>>" in clause_content:
+                clause_title, clause_content = clause_content.split(
+                    "<<CLAUSE_TITLE_FALLBACK_BREAK>>", 1
                 )
                 clause_title = clause_title.strip()
                 clause_content = clause_content.strip()
+                clause_title = re.sub(r"^§\s*\d+\s*", "", clause_title).strip()
             else:
-                clause_title = clause_title_candidate
+                clause_title = "(Unknown title)"
                 clause_content = clause_content.strip()
 
-        # Save final cleaned clause
+        # Clean any remaining markers from clause title/content
+        clause_title = re.sub(r"<<.*?>>", "", clause_title).strip()
+        clause_content = re.sub(r"<<.*?>>", "", clause_content).strip()
+
         clauses.append((clause_number, clause_title, clause_content))
 
     return clauses
@@ -147,7 +156,9 @@ def extract_speeches(clause_title, clause_content):
         r"(?:\s+\w+)*:"  # optional trailing tag
     )
     full_text = (
-        (clause_title + "\n" + clause_content).replace("<<END_OF_TITLE>>", "").strip()
+        (clause_title + "\n" + clause_content)
+        .replace("<<CLAUSE_TITLE_FALLBACK_BREAK>>", "")
+        .strip()
     )
     speeches = []
     matches = list(re.finditer(speech_pattern, full_text))
@@ -158,12 +169,16 @@ def extract_speeches(clause_title, clause_content):
         speech_text = full_text[start:end].strip()
         if "<<END_OF_SPEECH>>" in speech_text:
             speech_text = speech_text.split("<<END_OF_SPEECH>>")[0].strip()
+        speech_text = speech_text.replace("<<SPEECH_START>>", "").strip()
         speech_text = speech_text.replace("<<END_OF_SPEECH>>", "").strip()
         speech_number = int(match.group(1))
         speaker = match.group(2).strip().upper()
         party = match.group(3) or ""
         if speaker in NEUTRAL_SPEAKERS:
             party = ""
+
+        speech_text = re.sub(r"<<.*?>>", "", speech_text).strip()
+
         speeches.append(
             {
                 "speech_number": speech_number,
@@ -226,7 +241,7 @@ def process_files():
                     }
                 )
         speeches.extend(all_clause_speeches)
-        # Store protocol metadata separately
+        # Store protocol metadata
         protocols.append(
             {
                 "document_id": base_meta["document_id"],
