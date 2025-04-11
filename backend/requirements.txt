@@ -2,8 +2,9 @@
 
 # FastAPI + backend
 fastapi
-uvicorn
+uvicorn[standard]
 pydantic
+python-dotenv
 
 # MongoDB + parsing
 pymongo
