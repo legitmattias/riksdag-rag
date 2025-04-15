@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.get("/speeches", response_model=List[Speech])
 def get_speeches(
-    speaker: Optional[str] = Query(None, description="Filter by speaker name (case-insensitive)"),
+    speaker: Optional[List[str]] = Query(None, description="Filter by one or more speaker names"),
     party: Optional[str] = Query(None, description="Filter by party"),
     date: Optional[str] = Query(None, description="Filter by date (YYYY-MM-DD)"),
     clause_title: Optional[str] = Query(None, description="Match clause title (partial allowed)"),
@@ -20,7 +20,10 @@ def get_speeches(
     query = {}
 
     if speaker:
-        query["speaker"] = {"$regex": re.escape(speaker), "$options": "i"}
+        query["$or"] = [
+            {"speaker": {"$regex": re.escape(name), "$options": "i"}}
+            for name in speaker
+        ]
 
     if party:
         query["party"] = party.upper()
