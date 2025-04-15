@@ -6,10 +6,29 @@ from typing import List
 
 router = APIRouter()
 
+
 @router.get("/protocols", response_model=List[Protocol])
 def get_protocols(db=Depends(get_db)):
     return list(db.protocols.find({}, {"_id": 0}))
 
-@router.get("/parties", response_model=List[str])
+
+@router.get("/parties", response_model=List[dict])
 def get_parties(db=Depends(get_db)):
-    return sorted(db.speeches.distinct("party"))
+    party_codes = db.speeches.distinct("party")
+    unique_codes = sorted(set(code.strip() for code in party_codes if code is not None))
+
+    party_labels = {
+        "": "Neutral",
+        "S": "Socialdemokraterna",
+        "M": "Moderaterna",
+        "V": "Vänsterpartiet",
+        "C": "Centerpartiet",
+        "L": "Liberalerna",
+        "KD": "Kristdemokraterna",
+        "MP": "Miljöpartiet",
+        "SD": "Sverigedemokraterna",
+    }
+
+    return [
+        {"code": code, "label": party_labels.get(code, code)} for code in unique_codes
+    ]
