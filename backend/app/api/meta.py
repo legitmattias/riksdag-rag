@@ -1,5 +1,5 @@
 # backend/app/api/meta.py
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from app.db.mongo import get_db
 from app.models.models import Protocol
 from typing import List
@@ -32,3 +32,23 @@ def get_parties(db=Depends(get_db)):
     return [
         {"code": code, "label": party_labels.get(code, code)} for code in unique_codes
     ]
+
+
+@router.get("/speakers", response_model=List[str])
+def get_top_speakers(
+    db=Depends(get_db),
+    limit: int = Query(
+        50,
+        ge=1,
+        le=100,
+        description="Number of top speakers to return (based on number of speeches)",
+        example=10,
+    ),
+):
+    pipeline = [
+        {"$group": {"_id": "$speaker", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": limit},
+    ]
+    result = db.speeches.aggregate(pipeline)
+    return [doc["_id"] for doc in result]
