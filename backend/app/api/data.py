@@ -23,8 +23,20 @@ def get_speeches(
         description="Filter by one or more dates (YYYY-MM-DD)",
         example=["2023-12-19", "2024-06-19"],
     ),
+    start_date: Optional[str] = Query(
+        None,
+        description="Filter speeches from this date (inclusive, format YYYY-MM-DD)",
+        example="2023-01-01",
+    ),
+    end_date: Optional[str] = Query(
+        None,
+        description="Filter speeches up to this date (inclusive, format YYYY-MM-DD)",
+        example="2023-12-31",
+    ),
     clause_title: Optional[List[str]] = Query(
-        None, description="Match clause title(s), partial allowed", example=["klimat", "natur"]
+        None,
+        description="Match clause title(s), partial allowed",
+        example=["klimat", "natur"],
     ),
     match_all: bool = Query(
         False, description="Require all clause_title terms to match", example=False
@@ -57,6 +69,13 @@ def get_speeches(
 
     if date:
         query["date"] = {"$in": date}
+
+    if start_date or end_date:
+        query["date"] = {}
+        if start_date:
+            query["date"]["$gte"] = start_date
+        if end_date:
+            query["date"]["$lte"] = end_date
 
     if clause_title:
         condition_list = [
