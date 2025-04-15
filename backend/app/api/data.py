@@ -12,7 +12,7 @@ router = APIRouter()
 def get_speeches(
     speaker: Optional[List[str]] = Query(
         None,
-        description="Filter by one or more speaker names",
+        description="Filter by one or more speaker names (partial name allowed)",
         example=["Nohrén"],
     ),
     party: Optional[List[str]] = Query(
