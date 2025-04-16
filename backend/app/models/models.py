@@ -2,9 +2,11 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
+
 class Clause(BaseModel):
     number: int
     title: str
+
 
 class Protocol(BaseModel):
     document_id: str
@@ -14,6 +16,7 @@ class Protocol(BaseModel):
     num_clauses: int
     num_speeches: int
     clauses: List[Clause]
+
 
 class Speech(BaseModel):
     document_id: str
@@ -27,6 +30,15 @@ class Speech(BaseModel):
     speaker: str
     party: Optional[str]
     text: str
+
+
+class SpeechSummary(BaseModel):
+    speaker: Optional[str]
+    party: Optional[str]
+    date: Optional[str]
+    clause_title: Optional[str]
+    speech_number: Optional[int]
+
 
 class SpeakerCount(BaseModel):
     speaker: str

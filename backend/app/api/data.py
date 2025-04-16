@@ -1,7 +1,7 @@
 # backend/app/api/data.py
 from fastapi import APIRouter, Depends
 from app.db.mongo import get_db
-from app.models.models import Speech
+from app.models.models import Speech, SpeechSummary
 from app.utils.filters import common_speech_filters
 from app.utils.query_builder import build_speech_query
 from app.utils.pagination import apply_pagination
@@ -17,7 +17,7 @@ def get_speeches(filters: dict = Depends(common_speech_filters), db=Depends(get_
     paginated = apply_pagination(cursor, filters["skip"], filters["limit"])
     return list(paginated)
 
-@router.get("/speeches/summary")
+@router.get("/speeches/summary", response_model=List[SpeechSummary])
 def get_speech_summaries(filters: dict = Depends(common_speech_filters), db=Depends(get_db)):
     query = build_speech_query(filters)
     projection = {
