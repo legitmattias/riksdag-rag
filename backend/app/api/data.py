@@ -1,183 +1,33 @@
 # backend/app/api/data.py
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from app.db.mongo import get_db
 from app.models.models import Speech
-from typing import List, Optional
-import re
+from app.utils.filters import common_speech_filters
+from app.utils.query_builder import build_speech_query
+from app.utils.pagination import apply_pagination
+
+from typing import List
 
 router = APIRouter()
 
-
 @router.get("/speeches", response_model=List[Speech])
-def get_speeches(
-    speaker: Optional[List[str]] = Query(
-        None,
-        description="Filter by one or more speaker names (partial name allowed)",
-        example=["Nohrén"],
-    ),
-    party: Optional[List[str]] = Query(
-        None, description="Filter by one or more parties", example=["M", "Mp"]
-    ),
-    date: Optional[List[str]] = Query(
-        None,
-        description="Filter by one or more dates (YYYY-MM-DD)",
-        example=["2023-12-19", "2024-06-19"],
-    ),
-    start_date: Optional[str] = Query(
-        None,
-        description="Filter speeches from this date (inclusive, format YYYY-MM-DD)",
-        example="2023-01-01",
-    ),
-    end_date: Optional[str] = Query(
-        None,
-        description="Filter speeches up to this date (inclusive, format YYYY-MM-DD)",
-        example="2023-12-31",
-    ),
-    clause_title: Optional[List[str]] = Query(
-        None,
-        description="Match clause title(s), partial allowed",
-        example=["klimat", "natur"],
-    ),
-    match_all: bool = Query(
-        False, description="Require all clause_title terms to match", example=False
-    ),
-    skip: int = Query(
-        0, ge=0, description="Number of results to skip (for pagination)", example=0
-    ),
-    limit: int = Query(
-        100,
-        le=500,
-        description="Maximum number of results to return (max 500)",
-        example=50,
-    ),
-    db=Depends(get_db),
-):
-    query = {}
-
-    if speaker:
-        query.setdefault("$and", []).append(
-            {
-                "$or": [
-                    {"speaker": {"$regex": re.escape(name), "$options": "i"}}
-                    for name in speaker
-                ]
-            }
-        )
-
-    if party:
-        query["party"] = {"$in": [p.upper() for p in party]}
-
-    if date:
-        query["date"] = {"$in": date}
-
-    if start_date or end_date:
-        query["date"] = {}
-        if start_date:
-            query["date"]["$gte"] = start_date
-        if end_date:
-            query["date"]["$lte"] = end_date
-
-    if clause_title:
-        condition_list = [
-            {"clause_title": {"$regex": re.escape(ct), "$options": "i"}}
-            for ct in clause_title
-        ]
-        clause_query = (
-            {"$and": condition_list} if match_all else {"$or": condition_list}
-        )
-        query.setdefault("$and", []).append(clause_query)
-
-    speeches = db.speeches.find(query).skip(skip).limit(limit)
-    return list(speeches)
-
+def get_speeches(filters: dict = Depends(common_speech_filters), db=Depends(get_db)):
+    query = build_speech_query(filters)
+    cursor = db.speeches.find(query)
+    paginated = apply_pagination(cursor, filters["skip"], filters["limit"])
+    return list(paginated)
 
 @router.get("/speeches/summary")
-def get_speech_summaries(
-    speaker: Optional[List[str]] = Query(
-        None,
-        description="Filter by one or more speaker names (partial name allowed)",
-        example=["Nohrén"],
-    ),
-    party: Optional[List[str]] = Query(
-        None, description="Filter by one or more parties", example=["M", "Mp"]
-    ),
-    date: Optional[List[str]] = Query(
-        None,
-        description="Filter by one or more dates (YYYY-MM-DD)",
-        example=["2023-12-19", "2024-06-19"],
-    ),
-    start_date: Optional[str] = Query(
-        None,
-        description="Filter speeches from this date (inclusive, format YYYY-MM-DD)",
-        example="2023-01-01",
-    ),
-    end_date: Optional[str] = Query(
-        None,
-        description="Filter speeches up to this date (inclusive, format YYYY-MM-DD)",
-        example="2023-12-31",
-    ),
-    clause_title: Optional[List[str]] = Query(
-        None,
-        description="Match clause title(s), partial allowed",
-        example=["klimat", "natur"],
-    ),
-    match_all: bool = Query(
-        False, description="Require all clause_title terms to match", example=False
-    ),
-    skip: int = Query(
-        0, ge=0, description="Number of results to skip (for pagination)", example=0
-    ),
-    limit: int = Query(
-        100,
-        le=500,
-        description="Maximum number of results to return (max 500)",
-        example=50,
-    ),
-    db=Depends(get_db),
-):
-    query = {}
-
-    if speaker:
-        query.setdefault("$and", []).append(
-            {
-                "$or": [
-                    {"speaker": {"$regex": re.escape(name), "$options": "i"}}
-                    for name in speaker
-                ]
-            }
-        )
-
-    if party:
-        query["party"] = {"$in": [p.upper() for p in party]}
-
-    if date:
-        query["date"] = {"$in": date}
-
-    if start_date or end_date:
-        query["date"] = {}
-        if start_date:
-            query["date"]["$gte"] = start_date
-        if end_date:
-            query["date"]["$lte"] = end_date
-
-    if clause_title:
-        condition_list = [
-            {"clause_title": {"$regex": re.escape(ct), "$options": "i"}}
-            for ct in clause_title
-        ]
-        clause_query = (
-            {"$and": condition_list} if match_all else {"$or": condition_list}
-        )
-        query.setdefault("$and", []).append(clause_query)
-
+def get_speech_summaries(filters: dict = Depends(common_speech_filters), db=Depends(get_db)):
+    query = build_speech_query(filters)
     projection = {
         "_id": 0,
         "speaker": 1,
         "party": 1,
         "date": 1,
         "clause_title": 1,
-        "speech_number": 1,
+        "speech_number": 1
     }
-
-    summaries = db.speeches.find(query, projection).skip(skip).limit(limit)
-    return list(summaries)
+    cursor = db.speeches.find(query, projection)
+    paginated = apply_pagination(cursor, filters["skip"], filters["limit"])
+    return list(paginated)
