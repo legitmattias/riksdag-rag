@@ -1,7 +1,7 @@
 # backend/app/api/data.py
 from fastapi import APIRouter, Depends
 from app.db.mongo import get_db
-from app.models.models import Speech, SpeechSummary
+from app.models.models import Speech, SpeechSummary, PartyCount
 from app.utils.filters import common_speech_filters
 from app.utils.query_builder import build_speech_query
 from app.utils.pagination import apply_pagination
@@ -37,7 +37,7 @@ def get_speech_summaries(
     return list(paginated)
 
 
-@router.get("/summary/speeches-per-party", response_model=List[dict])
+@router.get("/summary/speeches-per-party", response_model=List[PartyCount])
 def get_speeches_per_party(
     filters: dict = Depends(common_speech_filters), db=Depends(get_db)
 ):
