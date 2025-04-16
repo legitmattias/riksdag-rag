@@ -48,3 +48,8 @@ class SpeakerCount(BaseModel):
 class PartyCount(BaseModel):
     party: str
     count: int
+
+
+class YearlyCount(BaseModel):
+    year: str
+    count: int
