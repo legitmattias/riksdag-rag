@@ -22,12 +22,13 @@ os.makedirs(PARSED_DATA_DIR, exist_ok=True)
 # HTML Preprocessing
 # ------------------------------------------------------------------------
 
+
 def mark_structural_boundaries(raw_html):
     """
     Insert custom markers into <h1> and <h2> tags to support clause/speech parsing.
     """
     soup = BeautifulSoup(raw_html, "html.parser")
-    
+
     for h1 in soup.find_all("h1"):
         if "§" in h1.text:
             h1.insert_before(NavigableString("<<CLAUSE_TITLE_BLOCK_START>>\n"))
@@ -38,6 +39,7 @@ def mark_structural_boundaries(raw_html):
             h2.insert_before(NavigableString("<<SPEECH_START>>\n"))
 
     return soup.get_text(separator="\n")
+
 
 def normalize_text(text):
     """
@@ -54,7 +56,9 @@ def normalize_text(text):
     )
 
     # Insert end-of-speech marker
-    text = re.sub(r"\n\s*Ajournering\s*\n", "\n<<END_OF_SPEECH>>\n", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"\n\s*Ajournering\s*\n", "\n<<END_OF_SPEECH>>\n", text, flags=re.IGNORECASE
+    )
 
     # Clean and normalize characters
     text = re.sub(r"\n+", "\n", text)
@@ -71,6 +75,7 @@ def normalize_text(text):
 
     return text
 
+
 def clean_html(raw_html):
     """
     Full cleaning pipeline.
@@ -78,9 +83,11 @@ def clean_html(raw_html):
     marked = mark_structural_boundaries(raw_html)
     return normalize_text(marked)
 
+
 # ------------------------------------------------------------------------
 # Clause and Speech Extraction
 # ------------------------------------------------------------------------
+
 
 def extract_clause_blocks(cleaned_text):
     """
@@ -89,24 +96,33 @@ def extract_clause_blocks(cleaned_text):
     header_pattern = r"\u00a7\s*(\d+)\s+"
     return list(re.finditer(header_pattern, cleaned_text))
 
+
 def parse_clause_title_and_content(block):
     """
     Parse clause title and content from a text block.
     """
     # Priority: cleanly marked with HTML
     html_match = re.search(
-        r"<<CLAUSE_TITLE_BLOCK_START>>(.*?)<<CLAUSE_TITLE_BLOCK_END>>",
-        block,
-        re.DOTALL
+        r"<<CLAUSE_TITLE_BLOCK_START>>(.*?)<<CLAUSE_TITLE_BLOCK_END>>", block, re.DOTALL
     )
     if html_match:
         title = html_match.group(1).strip()
         title = re.sub(r"^§\s*\d+\s*", "", title).strip()
-        content = re.sub(r"<<CLAUSE_TITLE_BLOCK_START>>.*?<<CLAUSE_TITLE_BLOCK_END>>", "", block, flags=re.DOTALL).strip()
+        content = re.sub(
+            r"<<CLAUSE_TITLE_BLOCK_START>>.*?<<CLAUSE_TITLE_BLOCK_END>>",
+            "",
+            block,
+            flags=re.DOTALL,
+        ).strip()
     else:
         # Fallback on paragraph pattern
         if "<<CLAUSE_TITLE_FALLBACK_BREAK>>" not in block:
-            block = re.sub(r"(Anf\.\s*\d+\s+)", r"<<CLAUSE_TITLE_FALLBACK_BREAK>>\1", block, count=1)
+            block = re.sub(
+                r"(Anf\.\s*\d+\s+)",
+                r"<<CLAUSE_TITLE_FALLBACK_BREAK>>\1",
+                block,
+                count=1,
+            )
 
         if "<<CLAUSE_TITLE_FALLBACK_BREAK>>" in block:
             title, content = block.split("<<CLAUSE_TITLE_FALLBACK_BREAK>>", 1)
@@ -121,6 +137,7 @@ def parse_clause_title_and_content(block):
     content = re.sub(r"<<.*?>>", "", content).strip()
 
     return title, content
+
 
 def extract_clauses(cleaned_text):
     """
@@ -137,7 +154,7 @@ def extract_clauses(cleaned_text):
         seen_clause_numbers.add(clause_number)
 
         # Pull block between current and next clause header
-        preamble = cleaned_text[:match.start()]
+        preamble = cleaned_text[: match.start()]
         clause_start = preamble.rfind("<<CLAUSE_TITLE_BLOCK_START>>")
         start = clause_start if clause_start != -1 else match.start()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(cleaned_text)
@@ -148,9 +165,11 @@ def extract_clauses(cleaned_text):
 
     return clauses
 
+
 # ------------------------------------------------------------------------
 # Speech Extraction
 # ------------------------------------------------------------------------
+
 
 def extract_speeches(clause_title, clause_content):
     """
@@ -183,18 +202,25 @@ def extract_speeches(clause_title, clause_content):
         if speaker in NEUTRAL_SPEAKERS:
             party = ""
 
-        speeches.append({
-            "speech_number": speech_number,
-            "speaker": speaker,
-            "party": party,
-            "text": speech_text
-        })
+        length = len(speech_text.split())
+
+        speeches.append(
+            {
+                "speech_number": speech_number,
+                "speaker": speaker,
+                "party": party,
+                "text": speech_text,
+                "length": length,
+            }
+        )
 
     return speeches
+
 
 # ------------------------------------------------------------------------
 # Main File Processor
 # ------------------------------------------------------------------------
+
 
 def extract_meta(data):
     dokument = data.get("dokumentstatus", {}).get("dokument", {})
@@ -223,6 +249,7 @@ def extract_meta(data):
         },
     }
 
+
 def process_files():
     speeches = []
     protocols = []
@@ -244,26 +271,31 @@ def process_files():
 
         for number, title, content in clauses:
             for speech in extract_speeches(title, content):
-                clause_speeches.append({
-                    **base_meta,
-                    "clause_number": number,
-                    "clause_title": title,
-                    **speech
-                })
+                clause_speeches.append(
+                    {
+                        **base_meta,
+                        "clause_number": number,
+                        "clause_title": title,
+                        **speech,
+                    }
+                )
 
         speeches.extend(clause_speeches)
 
-        protocols.append({
-            "document_id": base_meta["document_id"],
-            "title": base_meta["title"],
-            "parliament_year": base_meta["parliament_year"],
-            "date": base_meta["date"],
-            "num_clauses": len(clauses),
-            "num_speeches": len(clause_speeches),
-            "clauses": clause_info
-        })
+        protocols.append(
+            {
+                "document_id": base_meta["document_id"],
+                "title": base_meta["title"],
+                "parliament_year": base_meta["parliament_year"],
+                "date": base_meta["date"],
+                "num_clauses": len(clauses),
+                "num_speeches": len(clause_speeches),
+                "clauses": clause_info,
+            }
+        )
 
     return protocols, speeches
+
 
 # ------------------------------------------------------------------------
 # Entry Point
@@ -272,10 +304,14 @@ def process_files():
 if __name__ == "__main__":
     protocols, speeches = process_files()
 
-    with open(os.path.join(PARSED_DATA_DIR, "protocols.json"), "w", encoding="utf-8") as f:
+    with open(
+        os.path.join(PARSED_DATA_DIR, "protocols.json"), "w", encoding="utf-8"
+    ) as f:
         json.dump(protocols, f, ensure_ascii=False, indent=2)
 
-    with open(os.path.join(PARSED_DATA_DIR, "speeches.json"), "w", encoding="utf-8") as f:
+    with open(
+        os.path.join(PARSED_DATA_DIR, "speeches.json"), "w", encoding="utf-8"
+    ) as f:
         json.dump(speeches, f, ensure_ascii=False, indent=2)
 
     print("Parsing complete. Files saved in /data.")
