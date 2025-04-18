@@ -12,7 +12,9 @@ router = APIRouter()
 
 
 @router.get("/speeches", response_model=List[Speech])
-def get_speeches(base_filters: dict = Depends(common_speech_filters), db=Depends(get_db)):
+def get_speeches(
+    base_filters: dict = Depends(common_speech_filters), db=Depends(get_db)
+):
     query = build_speech_query(base_filters)
     cursor = db.speeches.find(query)
     paginated = apply_pagination(cursor, base_filters["skip"], base_filters["limit"])
@@ -54,13 +56,13 @@ def get_speeches_per_party(
     return list(results)
 
 
-router.get("/summary/speeches-over-time", response_model=List[YearlyPartyCount])
+@router.get("/summary/speeches-over-time", response_model=List[YearlyPartyCount])
 def get_speeches_over_time(
     base_filters: dict = Depends(common_speech_filters),
     summary_options: dict = Depends(common_summary_options),
     db=Depends(get_db),
 ):
-    group_by_party = summary_options["group_by_party"],
+    group_by_party = summary_options["group_by_party"]
     query = build_speech_query(base_filters)
 
     pipeline = [
@@ -72,7 +74,7 @@ def get_speeches_over_time(
                 "count": {"$sum": 1},
             }
         },
-        {"$sort": {"_id.year": 1, "_id.party": 1 if group_by_party else 0}},
+        {"$sort": {"_id.year": 1, **({"_id.party": 1} if group_by_party else {})}},
         {
             "$project": {
                 "year": "$_id.year",
