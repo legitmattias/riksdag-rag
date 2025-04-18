@@ -52,3 +52,10 @@ class PartyCount(BaseModel):
     month: Optional[str] = None
     party: Optional[str] = None
     count: int
+
+
+class SpeechLengthStats(BaseModel):
+    party: Optional[str] = None
+    speaker: Optional[str] = None
+    avg_length: float
+    count: int

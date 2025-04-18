@@ -1,7 +1,7 @@
 # backend/app/api/data.py
 from fastapi import APIRouter, Depends
 from app.db.mongo import get_db
-from app.models.models import Speech, SpeechSummary, PartyCount
+from app.models.models import Speech, SpeechSummary, PartyCount, SpeechLengthStats
 from app.utils.filters import common_speech_filters, common_summary_options
 from app.utils.query_builder import build_speech_query
 from app.utils.pagination import apply_pagination
@@ -92,6 +92,56 @@ def get_speeches_over_time(
                 "year": "$_id.year",
                 "month": "$_id.month" if resolution == "month" else None,
                 "party": "$_id.party" if group_by_party else None,
+                "count": 1,
+                "_id": 0,
+            }
+        },
+    ]
+
+    results = db.speeches.aggregate(pipeline)
+    return list(results)
+
+
+@router.get("/summary/speech-lengths", response_model=List[SpeechLengthStats])
+def get_speech_lengths(
+    base_filters: dict = Depends(common_speech_filters),
+    summary_options: dict = Depends(common_summary_options),
+    db=Depends(get_db),
+):
+    group_by_party = summary_options["group_by_party"]
+    group_by_speaker = summary_options["group_by_speaker"]
+
+    query = build_speech_query(base_filters)
+
+    projection = {"length": 1}
+    if group_by_party:
+        projection["party"] = 1
+    if group_by_speaker:
+        projection["speaker"] = 1
+
+    # Build _id group object
+    group_id = {}
+    if group_by_party:
+        group_id["party"] = "$party"
+    if group_by_speaker:
+        group_id["speaker"] = "$speaker"
+
+    pipeline = [
+        {"$match": query},
+        {"$project": projection},
+        {
+            "$group": {
+                "_id": group_id if group_id else None,
+                "avg_length": {"$avg": "$length"},
+                "count": {"$sum": 1},
+            }
+        },
+        {"$sort": {"avg_length": -1}},
+        {
+            "$project": {
+                "party": "$_id.party" if group_by_party else None,
+                "speaker": "$_id.speaker" if group_by_speaker else None,
+                "avg_length": {"$round": ["$avg_length", 1]},
                 "count": 1,
                 "_id": 0,
             }

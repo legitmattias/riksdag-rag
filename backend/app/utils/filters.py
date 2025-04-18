@@ -58,8 +58,13 @@ def common_speech_filters(
 
 def common_summary_options(
     group_by_party: bool = Query(False, description="Group results by year and party"),
+    group_by_speaker: bool = Query(False, description="Group results by speaker"),
     resolution: str = Query(
         "year", pattern="^(year|month)$", description="Time resolution (year or month)"
     ),
 ):
-    return {"group_by_party": group_by_party, "resolution": resolution}
+    return {
+        "group_by_party": group_by_party,
+        "group_by_speaker": group_by_speaker,
+        "resolution": resolution,
+    }
