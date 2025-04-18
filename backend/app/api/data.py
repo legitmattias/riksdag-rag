@@ -33,6 +33,7 @@ def get_speech_summaries(
         "date": 1,
         "clause_title": 1,
         "speech_number": 1,
+        "length": 1,
     }
     cursor = db.speeches.find(query, projection)
     paginated = apply_pagination(cursor, base_filters["skip"], base_filters["limit"])

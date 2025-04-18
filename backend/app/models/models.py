@@ -38,6 +38,7 @@ class SpeechSummary(BaseModel):
     date: Optional[str]
     clause_title: Optional[str]
     speech_number: Optional[int]
+    length: Optional[int]
 
 
 class SpeakerCount(BaseModel):
