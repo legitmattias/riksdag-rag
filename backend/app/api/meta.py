@@ -1,44 +1,30 @@
 # backend/app/api/meta.py
 from fastapi import APIRouter, Depends, Query
 from app.db.mongo import get_db
-from app.models.models import Protocol
+from app.models.models import Protocol, SpeakerCount
+from app.services.meta_service import (
+    fetch_protocols,
+    fetch_party_labels,
+    fetch_top_speakers,
+)
 from typing import List
-from collections import defaultdict
-from app.models.models import SpeakerCount
-from app.utils.speaker_normalizer import normalize_speaker_name
-
 
 router = APIRouter()
 
 
 @router.get("/protocols", response_model=List[Protocol])
 def get_protocols(db=Depends(get_db)):
-    return list(db.protocols.find({}, {"_id": 0}))
+    """Return a list of all parliamentary protocols."""
+    return fetch_protocols(db)
 
 
 @router.get("/parties", response_model=List[dict])
 def get_parties(db=Depends(get_db)):
-    party_codes = db.speeches.distinct("party")
-    unique_codes = sorted(set(code.strip() for code in party_codes if code is not None))
-
-    party_labels = {
-        "": "Neutral",
-        "S": "Socialdemokraterna",
-        "M": "Moderaterna",
-        "V": "Vänsterpartiet",
-        "C": "Centerpartiet",
-        "L": "Liberalerna",
-        "KD": "Kristdemokraterna",
-        "MP": "Miljöpartiet",
-        "SD": "Sverigedemokraterna",
-    }
-
-    return [
-        {"code": code, "label": party_labels.get(code, code)} for code in unique_codes
-    ]
+    """Return a list of all unique party codes with optional labels."""
+    return fetch_party_labels(db)
 
 
-@router.get("/speakers", response_model=List[SpeakerCount])
+@router.get("/top-speakers", response_model=List[SpeakerCount])
 def get_top_speakers(
     db=Depends(get_db),
     limit: int = Query(
@@ -49,29 +35,5 @@ def get_top_speakers(
         example=10,
     ),
 ):
-    pipeline = [
-        {"$group": {"_id": "$speaker", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}},
-        {"$limit": 200},  # allows space for duplicate names with titles
-    ]
-    raw_results = db.speeches.aggregate(pipeline)
-
-    speaker_counts = defaultdict(int)
-
-    for doc in raw_results:
-        raw_name = doc["_id"]
-        count = doc["count"]
-
-        if not raw_name:
-            continue
-
-        normalized = normalize_speaker_name(raw_name)
-        speaker_counts[normalized] += count
-
-    top_speakers = sorted(
-        [{"speaker": name, "count": count} for name, count in speaker_counts.items()],
-        key=lambda x: x["count"],
-        reverse=True,
-    )[:limit]
-
-    return top_speakers
+    """Return a list of top speakers ranked by speech count, normalized by title."""
+    return fetch_top_speakers(db, limit)
