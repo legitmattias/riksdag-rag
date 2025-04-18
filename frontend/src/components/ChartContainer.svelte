@@ -1,4 +1,3 @@
-// src/components/ChartContainer.svelte
 <script lang="ts">
   export let title: string;
 </script>
