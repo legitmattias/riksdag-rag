@@ -50,6 +50,7 @@ class PartyCount(BaseModel):
     count: int
 
 
-class YearlyCount(BaseModel):
+class YearlyPartyCount(BaseModel):
     year: str
+    party: Optional[str]
     count: int

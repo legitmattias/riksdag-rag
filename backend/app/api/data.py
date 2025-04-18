@@ -1,8 +1,8 @@
 # backend/app/api/data.py
 from fastapi import APIRouter, Depends
 from app.db.mongo import get_db
-from app.models.models import Speech, SpeechSummary, PartyCount, YearlyCount
-from app.utils.filters import common_speech_filters
+from app.models.models import Speech, SpeechSummary, PartyCount, YearlyPartyCount
+from app.utils.filters import common_speech_filters, common_summary_options
 from app.utils.query_builder import build_speech_query
 from app.utils.pagination import apply_pagination
 
@@ -54,20 +54,33 @@ def get_speeches_per_party(
     return list(results)
 
 
-@router.get("/summary/speeches-over-time", response_model=List[YearlyCount])
+router.get("/summary/speeches-over-time", response_model=List[YearlyPartyCount])
 def get_speeches_over_time(
-    filters: dict = Depends(common_speech_filters), db=Depends(get_db)
+    filters: dict = Depends(common_speech_filters),
+    summary_options: dict = Depends(common_summary_options),
+    db=Depends(get_db),
 ):
+    group_by_party = summary_options["group_by_party"],
     query = build_speech_query(filters)
 
     pipeline = [
         {"$match": query},
+        {"$project": {"year": {"$substr": ["$date", 0, 4]}, "party": 1}},
         {
-            "$project": {"year": {"$substr": ["$date", 0, 4]}}
-        },  # extract year from "YYYY-MM-DD"
-        {"$group": {"_id": "$year", "count": {"$sum": 1}}},
-        {"$sort": {"_id": 1}},
-        {"$project": {"_id": 0, "year": "$_id", "count": 1}},
+            "$group": {
+                "_id": {"year": "$year", "party": "$party" if group_by_party else None},
+                "count": {"$sum": 1},
+            }
+        },
+        {"$sort": {"_id.year": 1, "_id.party": 1 if group_by_party else 0}},
+        {
+            "$project": {
+                "year": "$_id.year",
+                "party": "$_id.party",
+                "count": 1,
+                "_id": 0,
+            }
+        },
     ]
 
     results = db.speeches.aggregate(pipeline)
