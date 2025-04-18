@@ -5,7 +5,7 @@ from app.models.models import Speech, SpeechSummary, PartyCount, SpeechLengthSta
 from app.utils.filters import common_speech_filters, common_summary_options
 from app.utils.query_builder import build_speech_query
 from app.utils.pagination import apply_pagination
-from app.utils.speaker_normalizer import normalize_speaker_name
+from app.utils.speaker_normalizer import regroup_normalized_speakers
 
 from typing import List
 
@@ -150,44 +150,12 @@ def get_speech_lengths(
     ]
 
     results = db.speeches.aggregate(pipeline)
-    grouped = {}
-
-    for doc in results:
-        speaker = doc.get("speaker")
-        party = doc.get("party")
-        avg_length = doc["avg_length"]
-        count = doc["count"]
-
-        # Normalize only if grouping by speaker
-        if group_by_speaker and speaker:
-            normalized = normalize_speaker_name(speaker)
-        else:
-            normalized = speaker
-
-        key = (normalized, party) if group_by_party else normalized
-
-        if key not in grouped:
-            grouped[key] = {
-                "speaker": normalized,
-                "party": party,
-                "count": 0,
-                "total": 0,
-            }
-
-        grouped[key]["count"] += count
-        grouped[key]["total"] += avg_length * count  # reverse average to total
-
-    # Recompute actual avg
-    final = []
-    for entry in grouped.values():
-        entry["avg_length"] = round(entry["total"] / entry["count"], 1)
-        del entry["total"]
-        final.append(entry)
-
-    final = sorted(
-        final,
-        key=lambda entry: entry["avg_length"],
-        reverse=True,  # descending, highest first
+    
+    # Regroup and normalize
+    final = regroup_normalized_speakers(
+        results,
+        normalize=group_by_speaker,
+        group_by_party=group_by_party
     )
 
     return final
