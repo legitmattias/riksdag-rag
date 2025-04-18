@@ -1,12 +1,13 @@
 <script lang="ts">
     import ChartContainer from '$components/ChartContainer.svelte'
+    import PartySpeechLengthChart from '$components/PartySpeechLengthChart.svelte';
   </script>
   
   <h2 class="text-xl font-semibold mb-4">Översikt</h2>
   
   <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
     <ChartContainer title="Längd på anföranden per parti">
-      <!-- Chart goes here -->
+        <PartySpeechLengthChart />
     </ChartContainer>
   
     <ChartContainer title="Mest aktiva talare (anföranden)">
