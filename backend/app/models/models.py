@@ -30,6 +30,7 @@ class Speech(BaseModel):
     speaker: str
     party: Optional[str]
     text: str
+    length: int
 
 
 class SpeechSummary(BaseModel):
