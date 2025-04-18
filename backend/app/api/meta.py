@@ -4,32 +4,11 @@ from app.db.mongo import get_db
 from app.models.models import Protocol
 from typing import List
 from collections import defaultdict
-import re
 from app.models.models import SpeakerCount
+from app.utils.speaker_normalizer import normalize_speaker_name
+
 
 router = APIRouter()
-
-
-def normalize_speaker_name(name: str) -> str:
-    """
-    Removes titles ending in 'minister', 'rådet', or 'konungen'.
-    Returns the remaining speaker name, uppercased.
-    """
-    name = name.strip()
-
-    # Match title prefixes ending with specified words
-    match = re.search(
-        r"(?:(tillträdande|ålders)?\s*)?(statsrådet|.*ministern?|rådet|presidenten|konungen)\s+(.*)$",
-        name,
-        flags=re.IGNORECASE,
-    )
-
-    if match:
-        cleaned = match.group(2).strip()
-    else:
-        cleaned = name
-
-    return cleaned.upper()
 
 
 @router.get("/protocols", response_model=List[Protocol])
