@@ -46,11 +46,7 @@ class SpeakerCount(BaseModel):
 
 
 class PartyCount(BaseModel):
-    party: str
-    count: int
-
-
-class YearlyPartyCount(BaseModel):
     year: str
-    party: Optional[str]
+    month: Optional[str] = None
+    party: Optional[str] = None
     count: int
