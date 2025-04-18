@@ -1,6 +1,6 @@
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
-    export let data;
+    // export let data;
 </script>
 
 <main class="min-h-screen bg-gray-50 text-gray-900 font-sans">
