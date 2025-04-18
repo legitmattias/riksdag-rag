@@ -18,7 +18,11 @@ def normalize_speaker_name(name: str) -> str:
     name = name.strip()
 
     # Match title prefixes ending with specified words
-    match = re.search(r"(minister|rådet|konungen)\s+(.*)$", name, flags=re.IGNORECASE)
+    match = re.search(
+        r"(?:(tillträdande|ålders)?\s*)?(statsrådet|.*ministern?|rådet|presidenten|konungen)\s+(.*)$",
+        name,
+        flags=re.IGNORECASE,
+    )
 
     if match:
         cleaned = match.group(2).strip()
