@@ -12,18 +12,18 @@ router = APIRouter()
 
 
 @router.get("/speeches", response_model=List[Speech])
-def get_speeches(filters: dict = Depends(common_speech_filters), db=Depends(get_db)):
-    query = build_speech_query(filters)
+def get_speeches(base_filters: dict = Depends(common_speech_filters), db=Depends(get_db)):
+    query = build_speech_query(base_filters)
     cursor = db.speeches.find(query)
-    paginated = apply_pagination(cursor, filters["skip"], filters["limit"])
+    paginated = apply_pagination(cursor, base_filters["skip"], base_filters["limit"])
     return list(paginated)
 
 
 @router.get("/speeches/summary", response_model=List[SpeechSummary])
 def get_speech_summaries(
-    filters: dict = Depends(common_speech_filters), db=Depends(get_db)
+    base_filters: dict = Depends(common_speech_filters), db=Depends(get_db)
 ):
-    query = build_speech_query(filters)
+    query = build_speech_query(base_filters)
     projection = {
         "_id": 0,
         "speaker": 1,
@@ -33,15 +33,15 @@ def get_speech_summaries(
         "speech_number": 1,
     }
     cursor = db.speeches.find(query, projection)
-    paginated = apply_pagination(cursor, filters["skip"], filters["limit"])
+    paginated = apply_pagination(cursor, base_filters["skip"], base_filters["limit"])
     return list(paginated)
 
 
 @router.get("/summary/speeches-per-party", response_model=List[PartyCount])
 def get_speeches_per_party(
-    filters: dict = Depends(common_speech_filters), db=Depends(get_db)
+    base_filters: dict = Depends(common_speech_filters), db=Depends(get_db)
 ):
-    query = build_speech_query(filters)
+    query = build_speech_query(base_filters)
 
     pipeline = [
         {"$match": query},
@@ -56,12 +56,12 @@ def get_speeches_per_party(
 
 router.get("/summary/speeches-over-time", response_model=List[YearlyPartyCount])
 def get_speeches_over_time(
-    filters: dict = Depends(common_speech_filters),
+    base_filters: dict = Depends(common_speech_filters),
     summary_options: dict = Depends(common_summary_options),
     db=Depends(get_db),
 ):
     group_by_party = summary_options["group_by_party"],
-    query = build_speech_query(filters)
+    query = build_speech_query(base_filters)
 
     pipeline = [
         {"$match": query},
