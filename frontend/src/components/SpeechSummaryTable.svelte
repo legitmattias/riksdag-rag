@@ -15,6 +15,7 @@
 
 	let summaries: SpeechSummary[] = [];
 	let isLoading = true;
+    let total = 0;
 
 	let selectedParty: string | undefined = undefined;
 	let limit = 25;
@@ -32,7 +33,10 @@
 
 			const res = await fetch(url);
 			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-			summaries = await res.json();
+			const result = await res.json();
+            summaries = result.items;
+            total = result.total;
+
 		} catch (err) {
 			console.error('Failed to fetch summaries:', err);
 		} finally {
@@ -57,7 +61,7 @@
 	on:update={updateFilters}
 />
 
-<PaginationIndicator {skip} {limit} />
+<PaginationIndicator {skip} {limit} {total} />
 
 {#if isLoading}
 	<p class="text-sm text-gray-500">Laddar anföranden...</p>
