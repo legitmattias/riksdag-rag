@@ -2,10 +2,10 @@
 from app.repositories.meta_repository import (
     find_all_protocols,
     get_distinct_party_codes,
-    aggregate_speaker_counts,
+    find_speakers_with_party
 )
 from app.utils.speaker_normalizer import normalize_speaker_name
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 
 def fetch_protocols(db):
@@ -34,22 +34,32 @@ def fetch_party_labels(db):
 
 
 def fetch_top_speakers(db, limit=50):
-    """Aggregate top speakers and normalize names by removing titles."""
-    raw = aggregate_speaker_counts(db)
-    counts = defaultdict(int)
+    """Aggregate top speakers and normalize names, resolving their most common party."""
+    raw = find_speakers_with_party(db)
+    speaker_counts = defaultdict(int)
+    speaker_parties = defaultdict(list)
 
     for doc in raw:
-        raw_name = doc["_id"]
-        count = doc["count"]
-        if not raw_name:
+        name = doc.get("speaker")
+        party = doc.get("party") or ""
+
+        if not name:
             continue
-        normalized = normalize_speaker_name(raw_name)
-        counts[normalized] += count
 
-    sorted_speakers = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+        normalized = normalize_speaker_name(name)
+        speaker_counts[normalized] += 1
+        speaker_parties[normalized].append(party)
 
-    sorted_speakers.sort(key=lambda x: x[1], reverse=True)
+    # Sort and pick most common party for each speaker
+    sorted_speakers = sorted(speaker_counts.items(), key=lambda x: x[1], reverse=True)
 
-    return [
-        {"speaker": name, "count": count} for name, count in sorted_speakers[:limit]
-    ]
+    result = []
+    for name, count in sorted_speakers[:limit]:
+        most_common_party = Counter(speaker_parties[name]).most_common(1)[0][0]
+        result.append({
+            "speaker": name,
+            "party": most_common_party,
+            "count": count
+        })
+
+    return result

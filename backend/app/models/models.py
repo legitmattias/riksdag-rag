@@ -44,6 +44,7 @@ class SpeechSummary(BaseModel):
 
 class SpeakerCount(BaseModel):
     speaker: str
+    party: Optional[str]
     count: int
 
 

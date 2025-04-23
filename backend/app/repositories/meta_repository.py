@@ -10,12 +10,6 @@ def get_distinct_party_codes(db):
     """Return a list of all unique party codes in the speeches collection."""
     return db.speeches.distinct("party")
 
-
-def aggregate_speaker_counts(db):
-    """Aggregate the number of speeches per raw speaker name."""
-    pipeline = [
-        {"$group": {"_id": "$speaker", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}},
-        {"$limit": 200},  # Allows space for title-variant duplicates
-    ]
-    return db.speeches.aggregate(pipeline)
+def find_speakers_with_party(db):
+    """Return all speakers with associated party information."""
+    return db.speeches.find({}, {"speaker": 1, "party": 1})
