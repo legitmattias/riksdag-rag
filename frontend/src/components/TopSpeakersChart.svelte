@@ -9,6 +9,7 @@
   
     type SpeakerItem = {
       speaker: string;
+      party: string | null
       count: number;
     };
   
