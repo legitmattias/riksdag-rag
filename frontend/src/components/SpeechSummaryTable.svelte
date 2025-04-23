@@ -1,6 +1,7 @@
 <!-- src/components/SpeechSummaryTable.svelte -->
 <script lang="ts">
     import { onMount } from 'svelte';
+    import TableControls from '$components/TableControls.svelte';
   
     type SpeechSummary = {
       speaker: string;
@@ -11,13 +12,24 @@
       length?: number;
     };
   
-    const apiUrl = import.meta.env.VITE_API_DATA + '/speeches/summary?limit=50';
     let summaries: SpeechSummary[] = [];
     let isLoading = true;
   
-    onMount(async () => {
+    let selectedParty: string = '';
+    let limit = 25;
+    let skip = 0;
+  
+    async function fetchSummaries() {
+      isLoading = true;
       try {
-        const res = await fetch(apiUrl);
+        const url = new URL(import.meta.env.VITE_API_DATA + '/speeches/summary');
+        url.searchParams.set('limit', limit.toString());
+        url.searchParams.set('skip', skip.toString());
+        if (selectedParty) {
+          url.searchParams.set('party', selectedParty);
+        }
+  
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         summaries = await res.json();
       } catch (err) {
@@ -25,11 +37,26 @@
       } finally {
         isLoading = false;
       }
-    });
+    }
+  
+    function updateFilters(event: CustomEvent) {
+      selectedParty = event.detail.selectedParty;
+      limit = event.detail.limit;
+      skip = event.detail.skip;
+      fetchSummaries();
+    }
+  
+    onMount(fetchSummaries);
   </script>
   
+  <TableControls
+    {selectedParty}
+    {limit}
+    {skip}
+    on:update={updateFilters} />
+  
   {#if isLoading}
-    <p class="text-sm text-gray-500">Laddar anforanden...</p>
+    <p class="text-sm text-gray-500">Laddar anföranden...</p>
   {:else}
     <div class="overflow-auto">
       <table class="min-w-full text-sm border">
