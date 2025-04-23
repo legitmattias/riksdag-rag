@@ -2,6 +2,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import TableControls from '$components/TableControls.svelte';
+    import PaginationIndicator from '$components/PaginationIndicator.svelte';
 
 	type SpeechSummary = {
 		speaker: string;
@@ -55,6 +56,8 @@
 	{skip}
 	on:update={updateFilters}
 />
+
+<PaginationIndicator {skip} {limit} />
 
 {#if isLoading}
 	<p class="text-sm text-gray-500">Laddar anföranden...</p>
