@@ -5,6 +5,7 @@
 	export let selectedParty: string = '__ALL__';
 	export let limit: number = 25;
 	export let skip: number = 0;
+    export let total: number = 0;
 
 	const dispatch = createEventDispatcher();
 	let parties: { code: string; label: string }[] = [];
@@ -71,7 +72,20 @@
 	</div>
 
 	<div class="mt-4 flex gap-2">
-		<button on:click={prevPage} class="rounded bg-gray-200 px-3 py-1">Föregående</button>
-		<button on:click={nextPage} class="rounded bg-gray-200 px-3 py-1">Nästa</button>
-	</div>
+        <button
+          on:click={prevPage}
+          class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
+          disabled={skip === 0}
+        >
+          Föregående
+        </button>
+        <button
+          on:click={nextPage}
+          class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
+          disabled={skip + limit >= total}
+        >
+          Nästa
+        </button>
+      </div>
+      
 </div>

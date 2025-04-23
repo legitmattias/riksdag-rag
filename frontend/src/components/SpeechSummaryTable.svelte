@@ -58,6 +58,7 @@
 	selectedParty={selectedParty ?? '__ALL__'}
 	{limit}
 	{skip}
+    {total}
 	on:update={updateFilters}
 />
 
