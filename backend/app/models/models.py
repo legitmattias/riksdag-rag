@@ -42,6 +42,11 @@ class SpeechSummary(BaseModel):
     length: Optional[int]
 
 
+class SummaryResponse(BaseModel):
+    total: int
+    items: List[SpeechSummary]
+
+
 class SpeakerCount(BaseModel):
     speaker: str
     party: Optional[str]

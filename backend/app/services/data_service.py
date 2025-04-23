@@ -1,6 +1,7 @@
 # backend/app/services/data_service.py
 
 from app.repositories.data_repository import (
+    count_speeches,
     find_speeches,
     aggregate_speeches_per_party,
     aggregate_speeches_over_time,
@@ -20,7 +21,7 @@ def fetch_speeches(db, filters):
 
 
 def fetch_speech_summaries(db, filters):
-    """Fetch paginated speech summaries with metadata only."""
+    """Fetch paginated speech summaries with metadata and total count."""
     query = build_speech_query(filters)
     projection = {
         "_id": 0,
@@ -31,9 +32,12 @@ def fetch_speech_summaries(db, filters):
         "speech_number": 1,
         "length": 1,
     }
-    cursor = find_speeches(db, query, projection)
-    return list(apply_pagination(cursor, filters["skip"], filters["limit"]))
 
+    cursor = find_speeches(db, query, projection)
+    paginated = list(apply_pagination(cursor, filters["skip"], filters["limit"]))
+    total = count_speeches(db, query)
+
+    return {"items": paginated, "total": total}
 
 def fetch_speeches_per_party(db, filters):
     """Return count of speeches grouped by party."""

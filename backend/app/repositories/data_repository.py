@@ -1,5 +1,10 @@
 # backend/app/repositories/data_repository.py
 
+def count_speeches(db, query) -> int:
+    """Return number of speeches matching the query."""
+    return db.speeches.count_documents(query)
+
+
 def find_speeches(db, query, projection=None):
     """Find speeches with optional projection."""
     return db.speeches.find(query, projection)

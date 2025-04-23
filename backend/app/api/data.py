@@ -1,7 +1,7 @@
 # backend/app/api/data.py
 from fastapi import APIRouter, Depends
 from app.db.mongo import get_db
-from app.models.models import Speech, SpeechSummary, PartyCount, SpeechLengthStats
+from app.models.models import Speech, SummaryResponse, PartyCount, SpeechLengthStats
 from app.utils.filters import common_speech_filters, common_summary_options
 from app.services.data_service import (
     fetch_speeches,
@@ -24,7 +24,7 @@ def get_speeches(
     return fetch_speeches(db, base_filters)
 
 
-@router.get("/speeches/summary", response_model=List[SpeechSummary])
+@router.get("/speeches/summary", response_model=SummaryResponse)
 def get_speech_summaries(
     base_filters: dict = Depends(common_speech_filters),
     db=Depends(get_db),
