@@ -5,7 +5,12 @@
 	export let selectedParty: string = '__ALL__';
 	export let limit: number = 25;
 	export let skip: number = 0;
+    let localSkip = skip;
     export let total: number = 0;
+
+    $: if (skip !== localSkip) {
+	    localSkip = skip;
+    }
 
 	const dispatch = createEventDispatcher();
 	let parties: { code: string; label: string }[] = [];
@@ -20,20 +25,20 @@
 	}
 
 	function applyFilters() {
-		dispatch('update', {
-			selectedParty: selectedParty === '__ALL__' ? undefined : selectedParty,
-			limit,
-			skip
-		});
-	}
+        dispatch('update', {
+            selectedParty: selectedParty === '__ALL__' ? undefined : selectedParty,
+            limit,
+            skip: localSkip
+        });
+    }
 
 	function nextPage() {
-		skip += limit;
+		localSkip += limit;
 		applyFilters();
 	}
 
 	function prevPage() {
-		skip = Math.max(skip - limit, 0);
+		localSkip = Math.max(localSkip - limit, 0);
 		applyFilters();
 	}
 

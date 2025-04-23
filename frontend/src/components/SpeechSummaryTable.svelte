@@ -45,11 +45,21 @@
 	}
 
 	function updateFilters(event: CustomEvent) {
-		selectedParty = event.detail.selectedParty;
-		limit = event.detail.limit;
-		skip = event.detail.skip;
-		fetchSummaries();
-	}
+	    const newParty = event.detail.selectedParty;
+
+        // Reset to first page if party changes
+        if (newParty !== selectedParty) {
+            skip = 0;
+        } else {
+            skip = event.detail.skip;
+        }
+
+        selectedParty = newParty;
+        limit = event.detail.limit;
+
+        fetchSummaries();
+    }
+
 
 	onMount(fetchSummaries);
 </script>
