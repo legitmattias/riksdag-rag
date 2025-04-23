@@ -28,7 +28,22 @@
       count: number;
     };
   
-    const apiUrl = import.meta.env.VITE_API_DATA + '/summary/speech-lengths?group_by_party=true';
+    const apiUrl =
+      import.meta.env.VITE_API_DATA +
+      '/summary/speech-lengths?group_by_party=true';
+  
+    const partyColors: Record<string, string> = {
+      S: '#e30613',
+      M: '#52bdec',
+      V: '#af1916',
+      C: '#00a886',
+      L: '#002a8d',
+      KD: '#193a83',
+      MP: '#83cf39',
+      SD: '#ffcc00',
+      '': '#9ca3af', // Neutral / unknown
+      UNKNOWN: '#d1d5db'
+    };
   
     let chartData = {
       labels: [] as string[],
@@ -36,7 +51,7 @@
         {
           label: 'Genomsnittlig anförandelängd',
           data: [] as number[],
-          backgroundColor: 'rgba(59, 130, 246, 0.6)'
+          backgroundColor: [] as string[]
         }
       ]
     } satisfies ChartData<'bar', number[], string>;
@@ -69,6 +84,10 @@
         chartData.datasets[0].data = result
           .map((d) => d.avg_length)
           .filter((val): val is number => typeof val === 'number');
+  
+        chartData.datasets[0].backgroundColor = result.map(
+          (d) => partyColors[d.party || ''] ?? partyColors.UNKNOWN
+        );
       } catch (err) {
         console.error('Failed to fetch chart data:', err);
       }
