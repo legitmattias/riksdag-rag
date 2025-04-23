@@ -13,7 +13,8 @@
       count: number;
     };
   
-    const apiUrl = import.meta.env.VITE_API_META + '/top-speakers?limit=25';
+    export let limit = 25;
+    const apiUrl = `${import.meta.env.VITE_API_META}/top-speakers?limit=${limit}`;
   
     let chartData: ChartData<'bar', number[], string> = {
       labels: [],
