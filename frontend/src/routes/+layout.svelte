@@ -14,6 +14,7 @@
       <a href="/explore/speech-length" class="block py-2 px-4 rounded hover:bg-gray-100">Längd per anförande</a>
       <a href="/explore/speakers" class="block py-2 px-4 rounded hover:bg-gray-100">Aktiva talare</a>
       <a href="/explore/over-time" class="block py-2 px-4 rounded hover:bg-gray-100">Anföranden över tid</a>
+      <a href="/explore/summaries" class="block py-2 px-4 rounded hover:bg-gray-100">Översikt över anföranden</a>
     </nav>
   </aside>
 
