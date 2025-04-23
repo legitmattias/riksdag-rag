@@ -12,7 +12,7 @@ def build_speech_query(filters: dict) -> dict:
             ]
         })
 
-    if filters["party"]:
+    if filters["party"] is not None:
         query["party"] = {"$in": [p.upper() for p in filters["party"]]}
 
     if filters["date"]:
