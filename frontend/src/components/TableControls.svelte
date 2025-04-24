@@ -5,12 +5,12 @@
 	export let selectedParty: string = '__ALL__';
 	export let limit: number = 25;
 	export let skip: number = 0;
-    let localSkip = skip;
-    export let total: number = 0;
+	let localSkip = skip;
+	export let total: number = 0;
 
-    $: if (skip !== localSkip) {
-	    localSkip = skip;
-    }
+	$: if (skip !== localSkip) {
+		localSkip = skip;
+	}
 
 	const dispatch = createEventDispatcher();
 	let parties: { code: string; label: string }[] = [];
@@ -25,12 +25,12 @@
 	}
 
 	function applyFilters() {
-        dispatch('update', {
-            selectedParty: selectedParty === '__ALL__' ? undefined : selectedParty,
-            limit,
-            skip: localSkip
-        });
-    }
+		dispatch('update', {
+			selectedParty: selectedParty === '__ALL__' ? undefined : selectedParty,
+			limit,
+			skip: localSkip
+		});
+	}
 
 	function nextPage() {
 		localSkip += limit;
@@ -77,20 +77,19 @@
 	</div>
 
 	<div class="mt-4 flex gap-2">
-        <button
-          on:click={prevPage}
-          class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
-          disabled={skip === 0}
-        >
-          Föregående
-        </button>
-        <button
-          on:click={nextPage}
-          class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
-          disabled={skip + limit >= total}
-        >
-          Nästa
-        </button>
-      </div>
-      
+		<button
+			on:click={prevPage}
+			class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
+			disabled={skip === 0}
+		>
+			Föregående
+		</button>
+		<button
+			on:click={nextPage}
+			class="rounded bg-gray-200 px-3 py-1 disabled:opacity-50"
+			disabled={skip + limit >= total}
+		>
+			Nästa
+		</button>
+	</div>
 </div>

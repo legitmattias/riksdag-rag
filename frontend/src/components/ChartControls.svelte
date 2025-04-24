@@ -32,7 +32,7 @@
 	onMount(fetchDateRange);
 </script>
 
-<div class="mb-4 flex flex-wrap gap-4 items-end">
+<div class="mb-4 flex flex-wrap items-end gap-4">
 	<div>
 		<label for="start-date" class="block text-sm font-medium text-gray-700">Från</label>
 		<input

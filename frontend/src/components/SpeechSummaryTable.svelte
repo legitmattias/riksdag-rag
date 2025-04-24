@@ -2,7 +2,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import TableControls from '$components/TableControls.svelte';
-    import PaginationIndicator from '$components/PaginationIndicator.svelte';
+	import PaginationIndicator from '$components/PaginationIndicator.svelte';
 
 	type SpeechSummary = {
 		speaker: string;
@@ -15,7 +15,7 @@
 
 	let summaries: SpeechSummary[] = [];
 	let isLoading = true;
-    let total = 0;
+	let total = 0;
 
 	let selectedParty: string | undefined = undefined;
 	let limit = 25;
@@ -34,9 +34,8 @@
 			const res = await fetch(url);
 			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
 			const result = await res.json();
-            summaries = result.items;
-            total = result.total;
-
+			summaries = result.items;
+			total = result.total;
 		} catch (err) {
 			console.error('Failed to fetch summaries:', err);
 		} finally {
@@ -45,21 +44,20 @@
 	}
 
 	function updateFilters(event: CustomEvent) {
-	    const newParty = event.detail.selectedParty;
+		const newParty = event.detail.selectedParty;
 
-        // Reset to first page if party changes
-        if (newParty !== selectedParty) {
-            skip = 0;
-        } else {
-            skip = event.detail.skip;
-        }
+		// Reset to first page if party changes
+		if (newParty !== selectedParty) {
+			skip = 0;
+		} else {
+			skip = event.detail.skip;
+		}
 
-        selectedParty = newParty;
-        limit = event.detail.limit;
+		selectedParty = newParty;
+		limit = event.detail.limit;
 
-        fetchSummaries();
-    }
-
+		fetchSummaries();
+	}
 
 	onMount(fetchSummaries);
 </script>
@@ -68,7 +66,7 @@
 	selectedParty={selectedParty ?? '__ALL__'}
 	{limit}
 	{skip}
-    {total}
+	{total}
 	on:update={updateFilters}
 />
 
