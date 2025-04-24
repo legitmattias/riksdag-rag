@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Bar } from 'svelte-chartjs';
 	import type { ChartData, ChartOptions } from 'chart.js';
+	import ChartDataLabels from 'chartjs-plugin-datalabels';
 	import { onMount } from 'svelte';
 	import ChartControls from '$components/ChartControls.svelte';
 	import { getPartyColor } from '$lib/colors';
@@ -14,7 +15,7 @@
 		Legend
 	} from 'chart.js';
 
-	ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+	ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ChartDataLabels);
 
 	type SpeechLengthItem = {
 		party: string | null;
@@ -50,6 +51,18 @@
 						return `${label}: ${avg} ord/anfr. (${count} anföranden)`;
 					}
 				}
+			},
+			datalabels: {
+				anchor: 'end',
+				align: 'end',
+				formatter: (value, context) => {
+					const count = counts[context.dataIndex];
+					return count ? `${count} st` : '';
+				},
+				font: {
+					weight: 'bold'
+				},
+				color: '#374151' // Tailwind's gray-700
 			}
 		},
 		scales: {
