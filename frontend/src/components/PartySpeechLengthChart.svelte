@@ -1,8 +1,8 @@
-<!-- src/components/PartySpeechLengthChart.svelte -->
 <script lang="ts">
 	import { Bar } from 'svelte-chartjs';
 	import type { ChartData, ChartOptions } from 'chart.js';
 	import { onMount } from 'svelte';
+	import ChartControls from '$components/ChartControls.svelte';
 	import { getPartyColor } from '$lib/colors';
 
 	import {
@@ -14,7 +14,6 @@
 		Legend
 	} from 'chart.js';
 
-	// Register required Chart.js components
 	ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 	type SpeechLengthItem = {
@@ -23,7 +22,8 @@
 		count: number;
 	};
 
-	const apiUrl = import.meta.env.VITE_API_DATA + '/summary/speech-lengths?group_by_party=true';
+	let startDate: string = '';
+	let endDate: string = '';
 
 	let chartData = {
 		labels: [] as string[],
@@ -39,37 +39,44 @@
 	const options: ChartOptions<'bar'> = {
 		responsive: true,
 		plugins: {
-			legend: {
-				display: false
-			}
+			legend: { display: false }
 		},
 		scales: {
 			y: {
 				beginAtZero: true,
-				title: {
-					display: true,
-					text: 'Ord per anförande'
-				}
+				title: { display: true, text: 'Ord per anförande' }
 			}
 		}
 	};
 
-	onMount(async () => {
+	async function fetchData() {
 		try {
-			const res = await fetch(apiUrl);
+			const url = new URL(import.meta.env.VITE_API_DATA + '/summary/speech-lengths');
+			url.searchParams.set('group_by_party', 'true');
+			if (startDate) url.searchParams.set('start_date', startDate);
+			if (endDate) url.searchParams.set('end_date', endDate);
+
+			const res = await fetch(url.toString());
 			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
 			const result: SpeechLengthItem[] = await res.json();
 
 			chartData.labels = result.map((d) => d.party || 'Neutral');
-			chartData.datasets[0].data = result
-				.map((d) => d.avg_length)
-				.filter((val): val is number => typeof val === 'number');
-
+			chartData.datasets[0].data = result.map((d) => d.avg_length);
 			chartData.datasets[0].backgroundColor = result.map((d) => getPartyColor(d.party));
 		} catch (err) {
 			console.error('Failed to fetch chart data:', err);
 		}
-	});
+	}
+
+	function handleUpdate(e: CustomEvent) {
+		startDate = e.detail.start_date;
+		endDate = e.detail.end_date;
+		fetchData();
+	}
+
+	onMount(fetchData);
 </script>
+
+<ChartControls {startDate} {endDate} on:update={handleUpdate} />
 
 <Bar data={chartData} {options} />
