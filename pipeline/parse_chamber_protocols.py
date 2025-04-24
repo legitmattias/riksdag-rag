@@ -28,16 +28,30 @@ os.makedirs(PARSED_DATA_DIR, exist_ok=True)
 def mark_structural_boundaries(raw_html):
     """
     Insert custom markers into <h1> and <h2> tags to support clause/speech parsing.
+    Ensures space between clause number and title span to avoid merging.
     """
     soup = BeautifulSoup(raw_html, "html.parser")
 
+    # Add markers around <h1> tags containing clauses to structure clause parsing.
     for h1 in soup.find_all("h1"):
-        if "§" in h1.text:
+        text = h1.get_text().strip()
+        if "§" in text:
+            spans = h1.find_all("span")
+            if len(spans) >= 3:
+                if spans[0].text.strip() == "§":
+                    for i, span in enumerate(spans):
+                        if span.text.strip().isdigit():
+                            marker = soup.new_tag("span")
+                            marker.string = "<<CLAUSE_NUMBER_END>>"
+                            span.insert_after(marker)
+                            break
+
             h1.insert_before(NavigableString("<<CLAUSE_TITLE_BLOCK_START>>\n"))
             h1.insert_after(NavigableString("\n<<CLAUSE_TITLE_BLOCK_END>>"))
 
+    # Insert a marker before <h2> tags containing speeches to identify speech blocks.
     for h2 in soup.find_all("h2"):
-        if "Anf." in h2.text:
+        if "Anf." in h2.get_text():
             h2.insert_before(NavigableString("<<SPEECH_START>>\n"))
 
     return soup.get_text(separator="\n")
@@ -102,20 +116,31 @@ def extract_clause_blocks(cleaned_text):
 def parse_clause_title_and_content(block):
     """
     Parse clause title and content from a text block.
+    Handles both cleanly marked blocks and fallback structure.
     """
     # Priority: cleanly marked with HTML
     html_match = re.search(
         r"<<CLAUSE_TITLE_BLOCK_START>>(.*?)<<CLAUSE_TITLE_BLOCK_END>>", block, re.DOTALL
     )
+
     if html_match:
-        title = html_match.group(1).strip()
-        title = re.sub(r"^§\s*\d+\s*", "", title).strip()
+        raw_block = html_match.group(1).strip()
+
+        # Use custom injected marker if present
+        if "<<CLAUSE_NUMBER_END>>" in raw_block:
+            title = raw_block.split("<<CLAUSE_NUMBER_END>>", 1)[-1].strip()
+        else:
+            title = re.sub(r"^§\s*\d{1,3}", "", raw_block).lstrip(" \u00a0")
+
+        title = re.sub(r"<<.*?>>", "", title).strip()
+
         content = re.sub(
             r"<<CLAUSE_TITLE_BLOCK_START>>.*?<<CLAUSE_TITLE_BLOCK_END>>",
             "",
             block,
             flags=re.DOTALL,
         ).strip()
+
     else:
         # Fallback on paragraph pattern
         if "<<CLAUSE_TITLE_FALLBACK_BREAK>>" not in block:
@@ -200,7 +225,7 @@ def extract_speeches(clause_title, clause_content):
         speech_text = re.sub(r"<<.*?>>", "", speech_text).strip()
         speech_number = int(match.group(1))
         speaker = match.group(2).strip().upper()
-            
+
         # Attempt to rehydrate cut-off neutral titles
         for neutral in NEUTRAL_SPEAKERS:
             if neutral.startswith(speaker):
