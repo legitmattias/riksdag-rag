@@ -7,8 +7,10 @@ from tqdm import tqdm
 # Neutral speakers without party affiliation
 NEUTRAL_SPEAKERS = [
     "TALMANNEN",
+    "FÖRSTE VICE TALMANNEN",
     "ANDRE VICE TALMANNEN",
     "TREDJE VICE TALMANNEN",
+    "TJÄNSTGÖRANDE ÅLDERSPRESIDENTEN",
     "HANS MAJESTÄT KONUNGEN",
 ]
 
@@ -198,6 +200,14 @@ def extract_speeches(clause_title, clause_content):
         speech_text = re.sub(r"<<.*?>>", "", speech_text).strip()
         speech_number = int(match.group(1))
         speaker = match.group(2).strip().upper()
+            
+        # Attempt to rehydrate cut-off neutral titles
+        for neutral in NEUTRAL_SPEAKERS:
+            if neutral.startswith(speaker):
+                speaker = neutral
+                party = ""
+                break
+
         party = match.group(3) or ""
         if speaker in NEUTRAL_SPEAKERS:
             party = ""
