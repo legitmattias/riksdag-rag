@@ -6,6 +6,7 @@ from app.services.meta_service import (
     fetch_protocols,
     fetch_party_labels,
     fetch_top_speakers,
+    fetch_date_range
 )
 from typing import List
 
@@ -37,3 +38,10 @@ def get_top_speakers(
 ):
     """Return a list of top speakers ranked by speech count, normalized by title."""
     return fetch_top_speakers(db, limit)
+
+
+@router.get("/date-range")
+def get_date_range_endpoint(db=Depends(get_db)):
+    """Return earliest and latest speech date."""
+    return fetch_date_range(db)
+

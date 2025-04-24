@@ -2,7 +2,8 @@
 from app.repositories.meta_repository import (
     find_all_protocols,
     get_distinct_party_codes,
-    find_speakers_with_party
+    find_speakers_with_party,
+    get_date_range
 )
 from app.utils.speaker_normalizer import normalize_speaker_name
 from collections import defaultdict, Counter
@@ -63,3 +64,8 @@ def fetch_top_speakers(db, limit=50):
         })
 
     return result
+
+def fetch_date_range(db):
+    """Fetch min and max date of speeches."""
+    return get_date_range(db)
+
