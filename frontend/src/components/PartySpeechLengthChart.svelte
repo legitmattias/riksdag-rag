@@ -24,6 +24,7 @@
 
 	let startDate: string = '';
 	let endDate: string = '';
+	let counts: number[] = [];
 
 	let chartData = {
 		labels: [] as string[],
@@ -39,7 +40,17 @@
 	const options: ChartOptions<'bar'> = {
 		responsive: true,
 		plugins: {
-			legend: { display: false }
+			legend: { display: false },
+			tooltip: {
+				callbacks: {
+					label: function (context) {
+						const label = context.label;
+						const avg = context.formattedValue;
+						const count = counts[context.dataIndex];
+						return `${label}: ${avg} ord/anfr. (${count} anföranden)`;
+					}
+				}
+			}
 		},
 		scales: {
 			y: {
@@ -60,6 +71,7 @@
 			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
 			const result: SpeechLengthItem[] = await res.json();
 
+			counts = result.map((d) => d.count);
 			chartData.labels = result.map((d) => d.party || 'Neutral');
 			chartData.datasets[0].data = result.map((d) => d.avg_length);
 			chartData.datasets[0].backgroundColor = result.map((d) => getPartyColor(d.party));
