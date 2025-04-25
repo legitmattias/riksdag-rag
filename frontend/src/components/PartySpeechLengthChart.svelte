@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 
 	import ChartControls from '$components/ChartControls.svelte';
+	import DateCoverage from './DateCoverage.svelte';
 	import { getPartyColor } from '$lib/colors';
 	import { createBaseOptions } from '$lib/chartOptions';
 
@@ -15,7 +16,6 @@
 
 	let startDate = '';
 	let endDate = '';
-	let counts: number[] = [];
 	let options = {};
 
 	export let minimal = false;
@@ -42,7 +42,6 @@
 			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
 			const result: SpeechLengthItem[] = await res.json();
 
-			counts = result.map((d) => d.count);
 			chartData.labels = result.map((d) => d.party || 'Neutral');
 			chartData.datasets[0].data = result.map((d) => d.avg_length);
 			chartData.datasets[0].backgroundColor = result.map((d) => getPartyColor(d.party));
@@ -70,6 +69,7 @@
 
 {#if !minimal}
 	<ChartControls {startDate} {endDate} on:update={handleUpdate} />
+	<DateCoverage {startDate} {endDate} />
 {/if}
 
 <Bar data={chartData} {options} />
