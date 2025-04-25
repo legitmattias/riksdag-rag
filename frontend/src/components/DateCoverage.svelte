@@ -8,6 +8,7 @@
 	let isLoading = true;
 
 	import { onMount } from 'svelte';
+	import { formatDateSwedish } from '$lib/utils/date';
 
 	onMount(async () => {
 		try {
@@ -32,9 +33,15 @@
 	<p class="text-sm text-gray-500">Laddar datumintervall...</p>
 {:else}
 	<p class="text-sm text-gray-600">
+        {#if minDate && maxDate}
+            Databasen innehåller protokoll för tiden <strong>{formatDateSwedish(minDate)}</strong> →
+            <strong>{formatDateSwedish(maxDate)}</strong>.<br />
+        {/if}
+
 		{#if startDate && endDate}
-			Visar anföranden mellan <strong>{startDate}</strong> och <strong>{endDate}</strong>.<br />
+			Visar anföranden mellan <strong>{formatDateSwedish(startDate)}</strong> och
+			<strong>{formatDateSwedish(endDate)}</strong>.
 		{/if}
-		Databasens täckning: <strong>{minDate}</strong> → <strong>{maxDate}</strong>.
+
 	</p>
 {/if}
