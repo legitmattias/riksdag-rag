@@ -33,15 +33,14 @@
 	<p class="text-sm text-gray-500">Laddar datumintervall...</p>
 {:else}
 	<p class="text-sm text-gray-600">
-        {#if minDate && maxDate}
-            Databasen innehåller protokoll för tiden <strong>{formatDateSwedish(minDate)}</strong> →
-            <strong>{formatDateSwedish(maxDate)}</strong>.<br />
-        {/if}
+		{#if minDate && maxDate}
+			Databasen innehåller protokoll för tiden <strong>{formatDateSwedish(minDate)}</strong> →
+			<strong>{formatDateSwedish(maxDate)}</strong>.<br />
+		{/if}
 
 		{#if startDate && endDate}
 			Visar anföranden mellan <strong>{formatDateSwedish(startDate)}</strong> och
 			<strong>{formatDateSwedish(endDate)}</strong>.
 		{/if}
-
 	</p>
 {/if}
