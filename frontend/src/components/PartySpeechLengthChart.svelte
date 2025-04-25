@@ -27,8 +27,7 @@
 	let endDate: string = '';
 	let counts: number[] = [];
 
-    export let minimal: boolean = false;
-
+	export let minimal: boolean = false;
 
 	let chartData = {
 		labels: [] as string[],
@@ -55,18 +54,21 @@
 					}
 				}
 			},
-			datalabels: {
-				anchor: 'end',
-				align: 'end',
-				formatter: (value, context) => {
-					const count = counts[context.dataIndex];
-					return count ? `${count} st` : '';
-				},
-				font: {
-					weight: 'bold'
-				},
-				color: '#374151' // Tailwind's gray-700
-			}
+			// Remove datalabels plugin if minimal (dashboard)
+			...(minimal
+				? {}
+				: {
+						datalabels: {
+							anchor: 'end',
+							align: 'end',
+							formatter: (value, context) => {
+								const count = counts[context.dataIndex];
+								return count ? `${count} st` : '';
+							},
+							font: { weight: 'bold' },
+							color: '#374151' // Tailwind's gray-700
+						}
+					})
 		},
 		scales: {
 			y: {
@@ -106,7 +108,7 @@
 </script>
 
 {#if !minimal}
-  <ChartControls {startDate} {endDate} on:update={handleUpdate} />
+	<ChartControls {startDate} {endDate} on:update={handleUpdate} />
 {/if}
 
 <Bar data={chartData} {options} />
