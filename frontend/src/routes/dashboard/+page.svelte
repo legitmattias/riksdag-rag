@@ -9,7 +9,7 @@
 
 <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
 	<ChartContainer title="Längd på anföranden per parti">
-		<PartySpeechLengthChart />
+		<PartySpeechLengthChart minimal={true} />
 	</ChartContainer>
 
 	<ChartContainer title="Mest aktiva talare (anföranden)">

@@ -27,6 +27,9 @@
 	let endDate: string = '';
 	let counts: number[] = [];
 
+    export let minimal: boolean = false;
+
+
 	let chartData = {
 		labels: [] as string[],
 		datasets: [
@@ -102,6 +105,8 @@
 	onMount(fetchData);
 </script>
 
-<ChartControls {startDate} {endDate} on:update={handleUpdate} />
+{#if !minimal}
+  <ChartControls {startDate} {endDate} on:update={handleUpdate} />
+{/if}
 
 <Bar data={chartData} {options} />
