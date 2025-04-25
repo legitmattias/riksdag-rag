@@ -1,5 +1,7 @@
 // src/lib/chartOptions.ts
 import type { ChartOptions } from 'chart.js';
+import { get } from 'svelte/store';
+import { partyLabels } from '$lib/stores/partyStore';
 
 type OptionsArgs = {
 	minimal?: boolean;
@@ -23,14 +25,23 @@ export function createBaseOptions({
 		tooltip: {
 			callbacks: {
 				label: function (context) {
+					const partyMap = get(partyLabels) as Record<string, string>;
+					const label = context.label;
+					const fullLabel = partyMap[label] ?? label;
 					const value = context.formattedValue;
-					return `${value} ${unitLabel}`;
+					const count = counts?.[context.dataIndex];
+
+					return `${fullLabel}: ${value} ${unitLabel}${count !== undefined ? ` (${count} anföranden)` : ''}`;
+				},
+				title: function () {
+					// Disable default title
+					return '';
 				}
 			}
 		},
 		datalabels: minimal
 			? {
-					display: false // Disable in minimal mode (dashboard)
+					display: false // Disable in minimal (dashboard) mode
 				}
 			: {
 					anchor: datalabelPosition === 'above' ? 'end' : 'center',
