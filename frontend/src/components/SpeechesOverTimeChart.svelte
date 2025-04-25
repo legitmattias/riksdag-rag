@@ -1,9 +1,13 @@
+<!-- src/components/SpeechesOverTimeChart.svelte -->
 <script lang="ts">
 	import { Bar } from 'svelte-chartjs';
 	import type { ChartData } from 'chart.js';
 	import { onMount } from 'svelte';
 	import { getPartyColor } from '$lib/colors';
 	import { createBaseOptions } from '$lib/chartOptions';
+	import { fetchWithDates } from '$lib/utils/fetchWithDates';
+	import ChartControls from '$components/ChartControls.svelte';
+	import DateCoverage from '$components/DateCoverage.svelte';
 
 	import {
 		Chart as ChartJS,
@@ -26,22 +30,20 @@
 		count: number;
 	};
 
-	const apiUrl =
-		import.meta.env.VITE_API_DATA +
-		'/summary/speeches-over-time?group_by_party=true&resolution=year';
-
+	let startDate = '';
+	let endDate = '';
 	let chartData: ChartData<'bar', number[], string> = {
 		labels: [],
 		datasets: []
 	};
-
 	let options = {};
 
-	onMount(async () => {
+	async function fetchData() {
 		try {
-			const res = await fetch(apiUrl);
-			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-			const result: TimeItem[] = await res.json();
+			const baseUrl =
+				import.meta.env.VITE_API_DATA +
+				'/summary/speeches-over-time?group_by_party=true&resolution=year';
+			const result: TimeItem[] = await fetchWithDates(baseUrl, startDate, endDate);
 
 			const grouped: Record<string, Record<string, number>> = {};
 			const years = new Set<string>();
@@ -75,9 +77,22 @@
 				showPartyCode: true
 			});
 		} catch (err) {
-			console.error('Failed to fetch over-time chart data:', err);
+			console.error('Failed to fetch speeches over time:', err);
 		}
-	});
+	}
+
+	function handleUpdate(e: CustomEvent) {
+		startDate = e.detail.start_date;
+		endDate = e.detail.end_date;
+		fetchData();
+	}
+
+	onMount(fetchData);
 </script>
+
+{#if !minimal}
+	<ChartControls {startDate} {endDate} on:update={handleUpdate} />
+	<DateCoverage {startDate} {endDate} />
+{/if}
 
 <Bar data={chartData} {options} />

@@ -1,12 +1,14 @@
+<!-- src/components/PartySpeechLengthChart.svelte -->
 <script lang="ts">
 	import { Bar } from 'svelte-chartjs';
 	import type { ChartData } from 'chart.js';
 	import { onMount } from 'svelte';
 
 	import ChartControls from '$components/ChartControls.svelte';
-	import DateCoverage from './DateCoverage.svelte';
+	import DateCoverage from '$components/DateCoverage.svelte';
 	import { getPartyColor } from '$lib/colors';
 	import { createBaseOptions } from '$lib/chartOptions';
+	import { fetchWithDates } from '$lib/utils/fetchWithDates';
 
 	type SpeechLengthItem = {
 		party: string | null;
@@ -33,14 +35,8 @@
 
 	async function fetchData() {
 		try {
-			const url = new URL(import.meta.env.VITE_API_DATA + '/summary/speech-lengths');
-			url.searchParams.set('group_by_party', 'true');
-			if (startDate) url.searchParams.set('start_date', startDate);
-			if (endDate) url.searchParams.set('end_date', endDate);
-
-			const res = await fetch(url.toString());
-			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-			const result: SpeechLengthItem[] = await res.json();
+			const baseUrl = import.meta.env.VITE_API_DATA + '/summary/speech-lengths?group_by_party=true';
+			const result: SpeechLengthItem[] = await fetchWithDates(baseUrl, startDate, endDate);
 
 			chartData.labels = result.map((d) => d.party || 'Neutral');
 			chartData.datasets[0].data = result.map((d) => d.avg_length);
@@ -54,7 +50,7 @@
 				showTooltipCount: false
 			});
 		} catch (err) {
-			console.error('Failed to fetch chart data:', err);
+			console.error('Failed to fetch party speech length data:', err);
 		}
 	}
 
