@@ -54,21 +54,17 @@
 					}
 				}
 			},
-			// Remove datalabels plugin if minimal (dashboard)
-			...(minimal
-				? {}
-				: {
-						datalabels: {
-							anchor: 'end',
-							align: 'end',
-							formatter: (value, context) => {
-								const count = counts[context.dataIndex];
-								return count ? `${count} st` : '';
-							},
-							font: { weight: 'bold' },
-							color: '#374151' // Tailwind's gray-700
-						}
-					})
+			datalabels: {
+				display: !minimal, // Don't show datalabels in minimal mode (dashboard)
+				anchor: 'end',
+				align: 'end',
+				formatter: (value, context) => {
+					const count = counts[context.dataIndex];
+					return count ? `${count} st` : '';
+				},
+				font: { weight: 'bold' },
+				color: '#374151'
+			}
 		},
 		scales: {
 			y: {
