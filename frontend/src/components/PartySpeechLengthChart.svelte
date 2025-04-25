@@ -1,21 +1,11 @@
 <script lang="ts">
 	import { Bar } from 'svelte-chartjs';
-	import type { ChartData, ChartOptions } from 'chart.js';
-	import ChartDataLabels from 'chartjs-plugin-datalabels';
+	import type { ChartData } from 'chart.js';
 	import { onMount } from 'svelte';
+
 	import ChartControls from '$components/ChartControls.svelte';
 	import { getPartyColor } from '$lib/colors';
-
-	import {
-		Chart as ChartJS,
-		BarElement,
-		CategoryScale,
-		LinearScale,
-		Tooltip,
-		Legend
-	} from 'chart.js';
-
-	ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ChartDataLabels);
+	import { createBaseOptions } from '$lib/chartOptions';
 
 	type SpeechLengthItem = {
 		party: string | null;
@@ -23,11 +13,12 @@
 		count: number;
 	};
 
-	let startDate: string = '';
-	let endDate: string = '';
+	let startDate = '';
+	let endDate = '';
 	let counts: number[] = [];
+	let options = {};
 
-	export let minimal: boolean = false;
+	export let minimal = false;
 
 	let chartData = {
 		labels: [] as string[],
@@ -39,40 +30,6 @@
 			}
 		]
 	} satisfies ChartData<'bar', number[], string>;
-
-	const options: ChartOptions<'bar'> = {
-		responsive: true,
-		plugins: {
-			legend: { display: false },
-			tooltip: {
-				callbacks: {
-					label: function (context) {
-						const label = context.label;
-						const avg = context.formattedValue;
-						const count = counts[context.dataIndex];
-						return `${label}: ${avg} ord/anfr. (${count} anföranden)`;
-					}
-				}
-			},
-			datalabels: {
-				display: !minimal, // Don't show datalabels in minimal mode (dashboard)
-				anchor: 'end',
-				align: 'end',
-				formatter: (value, context) => {
-					const count = counts[context.dataIndex];
-					return count ? `${count} st` : '';
-				},
-				font: { weight: 'bold' },
-				color: '#374151'
-			}
-		},
-		scales: {
-			y: {
-				beginAtZero: true,
-				title: { display: true, text: 'Ord per anförande' }
-			}
-		}
-	};
 
 	async function fetchData() {
 		try {
@@ -89,6 +46,14 @@
 			chartData.labels = result.map((d) => d.party || 'Neutral');
 			chartData.datasets[0].data = result.map((d) => d.avg_length);
 			chartData.datasets[0].backgroundColor = result.map((d) => getPartyColor(d.party));
+
+			options = createBaseOptions({
+				minimal,
+				counts,
+				unitLabel: 'ord/anfr.',
+				axisLabel: 'Ord per anförande',
+				datalabelPosition: 'above'
+			});
 		} catch (err) {
 			console.error('Failed to fetch chart data:', err);
 		}

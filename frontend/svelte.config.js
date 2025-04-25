@@ -11,6 +11,11 @@ const config = {
 		alias: {
 			$components: path.resolve('./src/components'),
 			$lib: './src/lib'
+		},
+		files: {
+			hooks: {
+				client: 'src/hooks.client.ts'
+			}
 		}
 	}
 };

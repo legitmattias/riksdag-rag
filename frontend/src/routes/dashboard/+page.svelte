@@ -13,10 +13,10 @@
 	</ChartContainer>
 
 	<ChartContainer title="Mest aktiva talare (anföranden)">
-		<TopSpeakersChart limit={10} />
+		<TopSpeakersChart minimal={true} limit={10} />
 	</ChartContainer>
 
 	<ChartContainer title="Anföranden per år">
-		<SpeechesOverTimeChart />
+		<SpeechesOverTimeChart minimal={true} />
 	</ChartContainer>
 </div>

@@ -1,7 +1,7 @@
 <!-- src/components/TopSpeakersChart.svelte -->
 <script lang="ts">
 	import { Bar } from 'svelte-chartjs';
-	import type { ChartData, ChartOptions } from 'chart.js';
+	import type { ChartData } from 'chart.js';
 	import { onMount } from 'svelte';
 	import {
 		Chart as ChartJS,
@@ -11,6 +11,7 @@
 		Tooltip,
 		Legend
 	} from 'chart.js';
+	import { createBaseOptions } from '$lib/chartOptions';
 
 	ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -20,7 +21,9 @@
 		count: number;
 	};
 
+	export let minimal = false;
 	export let limit = 25;
+	let options = {};
 	const apiUrl = `${import.meta.env.VITE_API_META}/top-speakers?limit=${limit}`;
 
 	let chartData: ChartData<'bar', number[], string> = {
@@ -34,32 +37,23 @@
 		]
 	};
 
-	const options: ChartOptions<'bar'> = {
-		responsive: true,
-		plugins: {
-			legend: {
-				display: false
-			}
-		},
-		indexAxis: 'y',
-		scales: {
-			x: {
-				beginAtZero: true,
-				title: {
-					display: true,
-					text: 'Antal anföranden'
-				}
-			}
-		}
-	};
-
 	onMount(async () => {
 		try {
 			const res = await fetch(apiUrl);
 			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
 			const result: SpeakerItem[] = await res.json();
+
 			chartData.labels = result.map((d) => (d.party ? `${d.speaker} (${d.party})` : d.speaker));
 			chartData.datasets[0].data = result.map((d) => d.count);
+
+			options = createBaseOptions({
+				minimal,
+				counts: chartData.datasets[0].data as number[],
+				unitLabel: 'anföranden',
+				axisLabel: 'Antal anföranden',
+				datalabelPosition: 'inside',
+				indexAxis: 'y'
+			});
 		} catch (err) {
 			console.error('Failed to fetch top speakers chart data:', err);
 		}

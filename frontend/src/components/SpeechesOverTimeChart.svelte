@@ -1,8 +1,11 @@
 <!-- src/components/SpeechesOverTimeChart.svelte -->
 <script lang="ts">
 	import { Bar } from 'svelte-chartjs';
-	import type { ChartData, ChartOptions } from 'chart.js';
+	import type { ChartData } from 'chart.js';
 	import { onMount } from 'svelte';
+	import { getPartyColor } from '$lib/colors';
+	import { createBaseOptions } from '$lib/chartOptions';
+
 	import {
 		Chart as ChartJS,
 		BarElement,
@@ -11,9 +14,11 @@
 		Tooltip,
 		Legend
 	} from 'chart.js';
-	import { getPartyColor } from '$lib/colors';
+	import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-	ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+	ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ChartDataLabels);
+
+	export let minimal: boolean = false;
 
 	type TimeItem = {
 		year: string;
@@ -31,18 +36,7 @@
 		datasets: []
 	};
 
-	const options: ChartOptions<'bar'> = {
-		responsive: true,
-		plugins: {
-			legend: { display: true }
-		},
-		scales: {
-			y: {
-				beginAtZero: true,
-				title: { display: true, text: 'Antal anföranden' }
-			}
-		}
-	};
+	let options = {};
 
 	onMount(async () => {
 		try {
@@ -64,12 +58,22 @@
 			const sortedYears = Array.from(years).sort();
 			chartData.labels = sortedYears;
 
-			chartData.datasets = Object.entries(grouped).map(([party, values]) => {
+			const datasets = Object.entries(grouped).map(([party, values]) => {
 				return {
 					label: party,
 					backgroundColor: getPartyColor(party),
 					data: sortedYears.map((year) => values[year] ?? 0)
 				};
+			});
+
+			chartData.datasets = datasets;
+
+			options = createBaseOptions({
+				minimal,
+				counts: datasets[0]?.data ?? [],
+				unitLabel: 'anföranden',
+				axisLabel: 'Antal anföranden',
+				datalabelPosition: 'inside'
 			});
 		} catch (err) {
 			console.error('Failed to fetch over-time chart data:', err);
