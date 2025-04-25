@@ -10,6 +10,8 @@ type OptionsArgs = {
 	axisLabel?: string;
 	datalabelPosition?: 'inside' | 'above';
 	indexAxis?: 'x' | 'y';
+	showTooltipCount?: boolean;
+	showPartyCode?: boolean;
 };
 
 export function createBaseOptions({
@@ -18,7 +20,9 @@ export function createBaseOptions({
 	unitLabel = '',
 	axisLabel = 'Ord per anförande',
 	datalabelPosition = 'inside',
-	indexAxis = 'x'
+	indexAxis = 'x',
+	showTooltipCount = true,
+	showPartyCode = false
 }: OptionsArgs): ChartOptions<'bar'> {
 	const plugins: ChartOptions<'bar'>['plugins'] = {
 		legend: { display: false },
@@ -26,12 +30,24 @@ export function createBaseOptions({
 			callbacks: {
 				label: function (context) {
 					const partyMap = get(partyLabels) as Record<string, string>;
-					const label = context.label;
-					const fullLabel = partyMap[label] ?? label;
+
+					// Use dataset label (party code), not x-axis label (year)
+					const datasetLabel = context.dataset.label as string;
+					const fullPartyName = partyMap[datasetLabel] ?? datasetLabel;
+
+					let labelToShow = fullPartyName;
+					if (showPartyCode && fullPartyName !== datasetLabel) {
+						labelToShow = `${fullPartyName} (${datasetLabel})`;
+					}
+
 					const value = context.formattedValue;
 					const count = counts?.[context.dataIndex];
 
-					return `${fullLabel}: ${value} ${unitLabel}${count !== undefined ? ` (${count} anföranden)` : ''}`;
+					const base = `${labelToShow}: ${value} ${unitLabel}`;
+					if (showTooltipCount && count !== undefined && count !== Number(value)) {
+						return `${base} (${count} anföranden)`;
+					}
+					return base;
 				},
 				title: function () {
 					// Disable default title
@@ -46,9 +62,12 @@ export function createBaseOptions({
 			: {
 					anchor: datalabelPosition === 'above' ? 'end' : 'center',
 					align: datalabelPosition === 'above' ? 'end' : 'center',
-					formatter: (_value, context) => {
-						const count = counts?.[context.dataIndex];
-						return count ? `${count}` : '';
+					formatter: (value, context) => {
+						if (counts?.length) {
+							const count = counts[context.dataIndex];
+							return count ? `${count}` : '';
+						}
+						return `${Math.round(Number(value))}`; // fallback: show bar value itself
 					},
 					font: { weight: 'bold' },
 					color: '#374151'

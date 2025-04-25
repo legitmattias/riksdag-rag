@@ -24,7 +24,7 @@
 		labels: [] as string[],
 		datasets: [
 			{
-				label: 'Genomsnittlig anförandelängd',
+				label: 'Genomsnittlig längd',
 				data: [] as number[],
 				backgroundColor: [] as string[]
 			}
@@ -49,10 +49,10 @@
 
 			options = createBaseOptions({
 				minimal,
-				counts,
 				unitLabel: 'ord/anfr.',
 				axisLabel: 'Ord per anförande',
-				datalabelPosition: 'above'
+				datalabelPosition: 'above',
+				showTooltipCount: false
 			});
 		} catch (err) {
 			console.error('Failed to fetch chart data:', err);

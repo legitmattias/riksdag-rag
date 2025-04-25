@@ -30,7 +30,7 @@
 		labels: [],
 		datasets: [
 			{
-				label: 'Antal anföranden',
+				label: 'Antal',
 				data: [],
 				backgroundColor: 'rgba(34, 197, 94, 0.6)' // green
 			}
@@ -52,7 +52,8 @@
 				unitLabel: 'anföranden',
 				axisLabel: 'Antal anföranden',
 				datalabelPosition: 'inside',
-				indexAxis: 'y'
+				indexAxis: 'y',
+				showTooltipCount: false
 			});
 		} catch (err) {
 			console.error('Failed to fetch top speakers chart data:', err);

@@ -1,4 +1,3 @@
-<!-- src/components/SpeechesOverTimeChart.svelte -->
 <script lang="ts">
 	import { Bar } from 'svelte-chartjs';
 	import type { ChartData } from 'chart.js';
@@ -18,7 +17,7 @@
 
 	ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ChartDataLabels);
 
-	export let minimal: boolean = false;
+	export let minimal = false;
 
 	type TimeItem = {
 		year: string;
@@ -58,22 +57,22 @@
 			const sortedYears = Array.from(years).sort();
 			chartData.labels = sortedYears;
 
-			const datasets = Object.entries(grouped).map(([party, values]) => {
-				return {
-					label: party,
-					backgroundColor: getPartyColor(party),
-					data: sortedYears.map((year) => values[year] ?? 0)
-				};
-			});
+			const datasets = Object.entries(grouped).map(([party, values]) => ({
+				label: party,
+				backgroundColor: getPartyColor(party),
+				data: sortedYears.map((year) => values[year] ?? 0)
+			}));
 
 			chartData.datasets = datasets;
 
 			options = createBaseOptions({
 				minimal,
-				counts: datasets[0]?.data ?? [],
 				unitLabel: 'anföranden',
 				axisLabel: 'Antal anföranden',
-				datalabelPosition: 'inside'
+				datalabelPosition: 'inside',
+				counts: undefined,
+				showTooltipCount: false,
+				showPartyCode: true
 			});
 		} catch (err) {
 			console.error('Failed to fetch over-time chart data:', err);
