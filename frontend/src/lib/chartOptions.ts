@@ -30,24 +30,10 @@ export function createBaseOptions({
 			callbacks: {
 				label: function (context) {
 					const partyMap = get(partyLabels) as Record<string, string>;
-
-					// Use dataset label (party code), not x-axis label (year)
-					const datasetLabel = context.dataset.label as string;
-					const fullPartyName = partyMap[datasetLabel] ?? datasetLabel;
-
-					let labelToShow = fullPartyName;
-					if (showPartyCode && fullPartyName !== datasetLabel) {
-						labelToShow = `${fullPartyName} (${datasetLabel})`;
-					}
-
-					const value = context.formattedValue;
-					const count = counts?.[context.dataIndex];
-
-					const base = `${labelToShow}: ${value} ${unitLabel}`;
-					if (showTooltipCount && count !== undefined && count !== Number(value)) {
-						return `${base} (${count} anföranden)`;
-					}
-					return base;
+					const label = context.label;
+					const fullLabel = partyMap[label] ?? label;
+					const value = context.raw;
+					return `${fullLabel}: ${value} ${unitLabel}`;
 				},
 				title: function () {
 					// Disable default title
@@ -63,6 +49,10 @@ export function createBaseOptions({
 					anchor: datalabelPosition === 'above' ? 'end' : 'center',
 					align: datalabelPosition === 'above' ? 'end' : 'center',
 					formatter: (value, context) => {
+						if (showPartyCode) {
+							const dataset = context.chart.data.datasets[context.datasetIndex];
+							return dataset?.label || '';
+						}
 						if (counts?.length) {
 							const count = counts[context.dataIndex];
 							return count ? `${count}` : '';
