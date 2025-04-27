@@ -29,6 +29,7 @@ pipeline/parsed/
 pipeline/data/
 pipeline/embeddings/
 pipeline/chroma_storage*/
+pipeline/upload_checkpoint*.txt
 pipeline/debug/
 
 # ─── Docker (runtime only) ────────────────────────────────
