@@ -28,6 +28,7 @@ pipeline/raw/*
 pipeline/parsed/
 pipeline/data/
 pipeline/embeddings/
+pipeline/chroma_storage/
 pipeline/debug/
 
 # ─── Docker (runtime only) ────────────────────────────────
