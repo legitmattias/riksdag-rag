@@ -17,6 +17,7 @@ load_dotenv(dotenv_path=env_path)
 DATA_PATH = "./data/speeches.json"
 CHROMA_STORAGE_PATH = "./chroma_storage"
 UPLOAD_CHECKPOINT_PATH = "./upload_checkpoint.txt"
+DUPLICATES_LOG_PATH = "./duplicates.log"
 BATCH_SIZE = 30
 MAX_SPEECHES = None  # None = full, or e.g., 100 for test
 
@@ -83,6 +84,30 @@ def save_upload_checkpoint(batch_index):
     with open(UPLOAD_CHECKPOINT_PATH, "w") as f:
         f.write(str(batch_index))
 
+def filter_duplicates(texts_batch, metadatas_batch, ids_batch):
+    """Remove duplicate IDs from the batch, log duplicates."""
+    unique_ids = set()
+    valid_texts = []
+    valid_metadatas = []
+    valid_ids = []
+    duplicate_ids = []
+
+    for text, meta, id_ in zip(texts_batch, metadatas_batch, ids_batch):
+        if id_ not in unique_ids:
+            unique_ids.add(id_)
+            valid_texts.append(text)
+            valid_metadatas.append(meta)
+            valid_ids.append(id_)
+        else:
+            duplicate_ids.append(id_)
+
+    if duplicate_ids:
+        with open(DUPLICATES_LOG_PATH, "a") as log_file:
+            for dup_id in duplicate_ids:
+                log_file.write(f"Duplicate ID skipped: {dup_id}\n")
+
+    return valid_texts, valid_metadatas, valid_ids
+
 def seed_chroma():
     """Main seeding process."""
     with open(DATA_PATH, "r", encoding="utf-8") as f:
@@ -139,14 +164,18 @@ def seed_chroma():
         metadatas_batch = batch_metadatas[batch_slice]
         ids_batch = batch_ids[batch_slice]
 
-        embeddings = embed_texts(texts_batch)
+        # Filter duplicates inside this batch
+        valid_texts, valid_metadatas, valid_ids = filter_duplicates(texts_batch, metadatas_batch, ids_batch)
 
-        collection.add(
-            documents=texts_batch,
-            embeddings=embeddings,
-            metadatas=metadatas_batch,
-            ids=ids_batch
-        )
+        if valid_texts:
+            embeddings = embed_texts(valid_texts)
+
+            collection.add(
+                documents=valid_texts,
+                embeddings=embeddings,
+                metadatas=valid_metadatas,
+                ids=valid_ids
+            )
 
         # Save upload checkpoint after each batch
         save_upload_checkpoint(batch_index + 1)
