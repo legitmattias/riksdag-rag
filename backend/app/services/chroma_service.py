@@ -8,7 +8,7 @@ import os
 load_dotenv()
 
 # Connect to ChromaDB
-chroma_client = chromadb.PersistentClient(path="pipeline/chroma_storage")
+chroma_client = chromadb.PersistentClient(path="../pipeline/chroma_storage")
 collection = chroma_client.get_collection("speeches")
 
 # OpenAI client

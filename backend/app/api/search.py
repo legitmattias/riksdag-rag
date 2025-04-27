@@ -1,8 +1,8 @@
 # /api/search.py
 
 from fastapi import APIRouter
-from models.search_models import RAGQueryRequest, RAGQueryResponse, SourceDocument
-from services.rag_service import generate_answer
+from app.models.search_models import RAGQueryRequest, RAGQueryResponse, SourceDocument
+from app.services.rag_service import generate_answer
 
 router = APIRouter()
 
