@@ -1,5 +1,3 @@
-# /models/search_models.py
-
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -12,6 +10,8 @@ class SourceDocument(BaseModel):
     speaker: Optional[str]
     party: Optional[str]
     date: Optional[str]
+    document_id: Optional[str]
+    speech_number: Optional[int]
 
 class RAGQueryResponse(BaseModel):
     answer: str
