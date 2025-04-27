@@ -2,10 +2,10 @@
 
 import os
 import json
-import tiktoken
 import chromadb
+import tiktoken
 from openai import OpenAI
-from typing import List
+from tqdm import tqdm
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -15,35 +15,31 @@ load_dotenv(dotenv_path=env_path)
 
 # Settings
 DATA_PATH = "./data/speeches.json"
-CHROMA_COLLECTION_NAME = "speeches"
-TARGET_TOKENS = 300
-MAX_TOKENS = 512
-MIN_TOKENS = 150
+CHROMA_STORAGE_PATH = "./chroma_storage"
+BATCH_SIZE = 30  # Number of chunks to embed per OpenAI request
+MAX_SPEECHES = 100  # Set to None for full, or e.g., 100 for test runs
 
-# Initialize OpenAI client
+# Initialize clients
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-# Initialize ChromaDB client
-chroma_client = chromadb.PersistentClient(path="chroma_storage")
-
-# Initialize or get collection
-collection = chroma_client.get_or_create_collection(CHROMA_COLLECTION_NAME)
+chroma_client = chromadb.PersistentClient(path=CHROMA_STORAGE_PATH)
+collection = chroma_client.get_or_create_collection("speeches")
 
 # Tokenizer
 tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
 
 def count_tokens(text: str) -> int:
-    """Count the number of tokens in a string."""
     return len(tokenizer.encode(text))
 
-def split_into_sentences(text: str) -> List[str]:
-    """Simple sentence splitter based on punctuation."""
+def split_into_sentences(text: str):
     import re
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     return [s for s in sentences if s]
 
-def chunk_text(text: str) -> List[str]:
-    """Chunk text into meaningful chunks based on token limits."""
+def chunk_text(text: str):
+    """Chunk speech text into chunks based on token limits."""
+    max_tokens = 512
+    min_tokens = 150
+
     sentences = split_into_sentences(text)
     chunks = []
     current_chunk = []
@@ -52,8 +48,8 @@ def chunk_text(text: str) -> List[str]:
     for sentence in sentences:
         tokens_in_sentence = count_tokens(sentence)
 
-        if current_token_count + tokens_in_sentence > MAX_TOKENS:
-            if current_token_count >= MIN_TOKENS:
+        if current_token_count + tokens_in_sentence > max_tokens:
+            if current_token_count >= min_tokens:
                 chunks.append(" ".join(current_chunk))
                 current_chunk = []
                 current_token_count = 0
@@ -66,15 +62,16 @@ def chunk_text(text: str) -> List[str]:
 
     return chunks
 
-def embed_text(text: str) -> List[float]:
-    """Get embedding vector for a text using OpenAI."""
+def embed_texts(texts: list) -> list:
+    """Batch embed a list of texts."""
     response = openai_client.embeddings.create(
         model="text-embedding-ada-002",
-        input=[text]
+        input=texts
     )
-    return response.data[0].embedding
+    return [item.embedding for item in response.data]
 
 def seed_chroma():
+    """Main seeding process."""
     with open(DATA_PATH, "r", encoding="utf-8") as f:
         speeches = json.load(f)
 
@@ -83,8 +80,13 @@ def seed_chroma():
     batch_texts = []
     batch_metadatas = []
     batch_ids = []
-
-    for speech in speeches:
+    speech_counter = 0
+    total_speeches = min(len(speeches), MAX_SPEECHES) if MAX_SPEECHES else len(speeches)
+    
+    # Prepare all chunks
+    for speech in tqdm(speeches, total=total_speeches, desc="Preparing chunks"):
+        if MAX_SPEECHES and speech_counter >= MAX_SPEECHES:
+            break
 
         text = speech.get("text", "")
         if not text:
@@ -107,21 +109,27 @@ def seed_chroma():
             batch_metadatas.append(metadata)
             batch_ids.append(chunk_id)
 
-            if len(batch_ids) % 50 == 0:
-                print(f"Prepared {len(batch_ids)} chunks...")
+        speech_counter += 1
 
-    # Upload to ChromaDB
-    print(f"Uploading {len(batch_ids)} chunks to ChromaDB...")
-    collection.add(
-        documents=batch_texts,
-        embeddings=[embed_text(text) for text in batch_texts],
-        metadatas=batch_metadatas,
-        ids=batch_ids
-    )
+    print(f"Prepared {len(batch_texts)} chunks. Starting upload to ChromaDB...")
 
-    print("Finished seeding ChromaDB!")
+    # Embed and store in batches
+    for i in tqdm(range(0, len(batch_texts), BATCH_SIZE), desc="Uploading to Chroma"):
+        batch_slice = slice(i, i + BATCH_SIZE)
+        texts_batch = batch_texts[batch_slice]
+        metadatas_batch = batch_metadatas[batch_slice]
+        ids_batch = batch_ids[batch_slice]
 
+        embeddings = embed_texts(texts_batch)
 
+        collection.add(
+            documents=texts_batch,
+            embeddings=embeddings,
+            metadatas=metadatas_batch,
+            ids=ids_batch
+        )
+
+    print("Finished seeding ChromaDB")
 
 if __name__ == "__main__":
     seed_chroma()
