@@ -16,8 +16,9 @@ load_dotenv(dotenv_path=env_path)
 # Settings
 DATA_PATH = "./data/speeches.json"
 CHROMA_STORAGE_PATH = "./chroma_storage"
-BATCH_SIZE = 30  # Number of chunks to embed per OpenAI request
-MAX_SPEECHES = 100  # Set to None for full, or e.g., 100 for test runs
+UPLOAD_CHECKPOINT_PATH = "./upload_checkpoint.txt"
+BATCH_SIZE = 30
+MAX_SPEECHES = None  # None = full, or e.g., 100 for test
 
 # Initialize clients
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -70,6 +71,18 @@ def embed_texts(texts: list) -> list:
     )
     return [item.embedding for item in response.data]
 
+def load_upload_checkpoint():
+    """Load upload checkpoint if exists."""
+    if os.path.exists(UPLOAD_CHECKPOINT_PATH):
+        with open(UPLOAD_CHECKPOINT_PATH, "r") as f:
+            return int(f.read().strip())
+    return 0
+
+def save_upload_checkpoint(batch_index):
+    """Save upload checkpoint."""
+    with open(UPLOAD_CHECKPOINT_PATH, "w") as f:
+        f.write(str(batch_index))
+
 def seed_chroma():
     """Main seeding process."""
     with open(DATA_PATH, "r", encoding="utf-8") as f:
@@ -80,11 +93,9 @@ def seed_chroma():
     batch_texts = []
     batch_metadatas = []
     batch_ids = []
+
     speech_counter = 0
-    total_speeches = min(len(speeches), MAX_SPEECHES) if MAX_SPEECHES else len(speeches)
-    
-    # Prepare all chunks
-    for speech in tqdm(speeches, total=total_speeches, desc="Preparing chunks"):
+    for idx, speech in enumerate(tqdm(speeches, desc="Preparing chunks")):
         if MAX_SPEECHES and speech_counter >= MAX_SPEECHES:
             break
 
@@ -94,15 +105,15 @@ def seed_chroma():
 
         chunks = chunk_text(text)
 
-        for idx, chunk in enumerate(chunks):
-            chunk_id = f"{speech['document_id']}_{speech['speech_number']}_{idx}"
+        for chunk_idx, chunk in enumerate(chunks):
+            chunk_id = f"{speech['document_id']}_{speech['speech_number']}_{chunk_idx}"
             metadata = {
                 "speaker": speech.get("speaker"),
                 "party": speech.get("party"),
                 "date": speech.get("date"),
                 "document_id": speech.get("document_id"),
                 "speech_number": speech.get("speech_number"),
-                "chunk_index": idx
+                "chunk_index": chunk_idx
             }
 
             batch_texts.append(chunk)
@@ -113,9 +124,17 @@ def seed_chroma():
 
     print(f"Prepared {len(batch_texts)} chunks. Starting upload to ChromaDB...")
 
+    # Load upload checkpoint
+    last_uploaded_batch = load_upload_checkpoint()
+
     # Embed and store in batches
-    for i in tqdm(range(0, len(batch_texts), BATCH_SIZE), desc="Uploading to Chroma"):
-        batch_slice = slice(i, i + BATCH_SIZE)
+    total_batches = (len(batch_texts) + BATCH_SIZE - 1) // BATCH_SIZE
+
+    for batch_index in tqdm(range(total_batches), desc="Uploading to Chroma"):
+        if batch_index < last_uploaded_batch:
+            continue  # Skip batches already uploaded
+
+        batch_slice = slice(batch_index * BATCH_SIZE, (batch_index + 1) * BATCH_SIZE)
         texts_batch = batch_texts[batch_slice]
         metadatas_batch = batch_metadatas[batch_slice]
         ids_batch = batch_ids[batch_slice]
@@ -129,7 +148,13 @@ def seed_chroma():
             ids=ids_batch
         )
 
-    print("Finished seeding ChromaDB")
+        # Save upload checkpoint after each batch
+        save_upload_checkpoint(batch_index + 1)
+
+    print("Finished seeding ChromaDB!")
+    # Clear checkpoint after full success
+    if os.path.exists(UPLOAD_CHECKPOINT_PATH):
+        os.remove(UPLOAD_CHECKPOINT_PATH)
 
 if __name__ == "__main__":
     seed_chroma()
