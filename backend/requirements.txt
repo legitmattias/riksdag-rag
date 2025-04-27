@@ -1,12 +1,20 @@
 # backend/requirements.txt
 
-# FastAPI + backend
+# FastAPI + backend server
 fastapi
 uvicorn[standard]
 pydantic
 python-dotenv
 
-# MongoDB + parsing
+# Database clients
 pymongo
+chromadb
+
+# Embedding and LLM
+openai
+tiktoken
+
+# Text processing and parsing
 beautifulsoup4
 tqdm
+
