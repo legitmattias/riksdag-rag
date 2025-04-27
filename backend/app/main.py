@@ -1,7 +1,7 @@
 # backend/app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import meta, data
+from app.api import meta, data, search
 from fastapi.responses import Response
 
 app = FastAPI()
@@ -15,6 +15,7 @@ app.add_middleware(
 
 app.include_router(meta.router, prefix="/meta")
 app.include_router(data.router, prefix="/data")
+app.include_router(search.router, prefix="/search")
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
