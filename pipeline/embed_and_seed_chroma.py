@@ -8,6 +8,8 @@ from openai import OpenAI
 from tqdm import tqdm
 from dotenv import load_dotenv
 from pathlib import Path
+import time
+import logging
 
 # Load environment variables (OpenAI API key)
 env_path = Path(__file__).resolve().parents[1] / "backend" / ".env"
@@ -18,8 +20,24 @@ DATA_PATH = "./data/speeches.json"
 CHROMA_STORAGE_PATH = "./chroma_storage"
 UPLOAD_CHECKPOINT_PATH = "./upload_checkpoint.txt"
 DUPLICATES_LOG_PATH = "./duplicates.log"
+
+# Seeding configuration
 BATCH_SIZE = 30
-MAX_SPEECHES = None  # None = full, or e.g., 100 for test
+MAX_SPEECHES = None  # None = full run, or set an integer for test runs
+
+# OpenAI token limit handling (for dynamic rate limiting)
+TOKEN_LIMIT_PER_MINUTE = 40000
+tokens_this_minute = 0
+last_reset_time = time.time()
+total_tokens_embedded = 0
+
+# Setup logging
+logging.basicConfig(
+    filename="seeding.log",
+    filemode="a",
+    format="%(asctime)s - %(message)s",
+    level=logging.INFO
+)
 
 # Initialize clients
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -108,6 +126,30 @@ def filter_duplicates(texts_batch, metadatas_batch, ids_batch):
 
     return valid_texts, valid_metadatas, valid_ids
 
+def wait_if_needed(texts: list):
+    """Wait if token rate limit would be exceeded and track total tokens."""
+    global tokens_this_minute, last_reset_time, total_tokens_embedded
+
+    batch_tokens = sum(count_tokens(text) for text in texts)
+    current_time = time.time()
+    elapsed_time = current_time - last_reset_time
+
+    if elapsed_time >= 60:
+        tokens_this_minute = 0
+        last_reset_time = current_time
+
+    if tokens_this_minute + batch_tokens > TOKEN_LIMIT_PER_MINUTE:
+        wait_time = 60 - elapsed_time
+        logging.info(f"⚡ Token limit would be exceeded. Sleeping {wait_time:.2f} seconds...")
+        time.sleep(wait_time)
+        tokens_this_minute = 0
+        last_reset_time = time.time()
+
+    tokens_this_minute += batch_tokens
+    total_tokens_embedded += batch_tokens
+
+    logging.info(f"Total tokens embedded so far: {total_tokens_embedded:,}")
+
 def seed_chroma():
     """Main seeding process."""
     with open(DATA_PATH, "r", encoding="utf-8") as f:
@@ -168,6 +210,7 @@ def seed_chroma():
         valid_texts, valid_metadatas, valid_ids = filter_duplicates(texts_batch, metadatas_batch, ids_batch)
 
         if valid_texts:
+            wait_if_needed(valid_texts)
             embeddings = embed_texts(valid_texts)
 
             collection.add(
