@@ -44,6 +44,7 @@ class SpeechSummary(BaseModel):
     clause_title: Optional[str]
     speech_number: Optional[int]
     length: Optional[int]
+    document_id: Optional[str]
 
 
 class SummaryResponse(BaseModel):
