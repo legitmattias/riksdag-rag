@@ -14,7 +14,9 @@ def generate_answer(query: str, top_k: int = 5) -> dict:
     )
 
     prompt = f"""Svara på frågan baserat på följande utdrag från svenska riksdagsdebatter.
-Använd endast information från dessa utdrag. Om du inte vet, skriv att du inte är säker.
+Om utdragen ger tydliga indikationer, sammanfatta partiets hållning på ett försiktigt sätt.
+Om informationen är oklar eller motsägelsefull, skriv att det inte framgår tydligt.
+Använd endast information från utdragen och dra inga egna slutsatser.
 
 Utdrag:
 {context}
