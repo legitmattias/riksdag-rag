@@ -20,7 +20,7 @@
 	let isLoading = true;
 	let total = 0;
 	let selectedSpeechId: string | null = null;
-	let showFilters = true;
+	let showFilters = false;
 
 	// Filters state
 	let selectedSpeakers: string[] = [];
