@@ -17,6 +17,10 @@ class Protocol(BaseModel):
     num_speeches: int
     clauses: List[Clause]
 
+class SourceLink(BaseModel):
+    html: Optional[str]
+    pdf: Optional[dict]
+
 
 class Speech(BaseModel):
     document_id: str
@@ -31,7 +35,7 @@ class Speech(BaseModel):
     party: Optional[str]
     text: str
     length: int
-
+    source: Optional[SourceLink] = None
 
 class SpeechSummary(BaseModel):
     speaker: Optional[str]
