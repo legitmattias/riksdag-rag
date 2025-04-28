@@ -2,6 +2,12 @@ import os
 import json
 from pymongo import MongoClient
 from tqdm import tqdm
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Load environment variables (.env file in backend)
+env_path = Path(__file__).resolve().parents[1] / "backend" / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # Define paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -14,8 +20,11 @@ with open(os.path.join(PARSED_DATA_DIR, "speeches.json"), encoding="utf-8") as f
     speeches = json.load(f)
 
 # Set up MongoDB connection
-client = MongoClient("mongodb://localhost:27017/")
-db = client.riksdagen
+MONGO_URI = os.getenv("MONGO_URI")
+DB_NAME = os.getenv("DB_NAME")
+
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
 protocols_collection = db.protocols
 speeches_collection = db.speeches
 
