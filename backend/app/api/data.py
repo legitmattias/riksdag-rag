@@ -26,23 +26,6 @@ def get_speeches(
     return fetch_speeches(db, base_filters)
 
 
-@router.get("/speeches/{speech_id}", response_model=Speech)
-def get_single_speech(
-    speech_id: str,
-    db=Depends(get_db),
-):
-    """Get a single speech by ID."""
-    try:
-        speech = fetch_single_speech(db, speech_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid speech ID format.")
-
-    if not speech:
-        raise HTTPException(status_code=404, detail="Speech not found.")
-
-    return speech
-
-
 @router.get("/speeches/summary", response_model=SummaryResponse)
 def get_speech_summaries(
     base_filters: dict = Depends(common_speech_filters),
@@ -79,3 +62,20 @@ def get_speech_lengths(
 ):
     """Return average speech length grouped by party and/or speaker."""
     return fetch_speech_lengths(db, base_filters, summary_options)
+
+
+@router.get("/speeches/{speech_id}", response_model=Speech)
+def get_single_speech(
+    speech_id: str,
+    db=Depends(get_db),
+):
+    """Get a single speech by ID."""
+    try:
+        speech = fetch_single_speech(db, speech_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid speech ID format.")
+
+    if not speech:
+        raise HTTPException(status_code=404, detail="Speech not found.")
+
+    return speech
