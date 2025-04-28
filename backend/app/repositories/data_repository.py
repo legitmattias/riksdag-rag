@@ -1,5 +1,6 @@
 # backend/app/repositories/data_repository.py
 
+
 def count_speeches(db, query) -> int:
     """Return number of speeches matching the query."""
     return db.speeches.count_documents(query)
@@ -8,6 +9,13 @@ def count_speeches(db, query) -> int:
 def find_speeches(db, query, projection=None):
     """Find speeches with optional projection."""
     return db.speeches.find(query, projection)
+
+
+def find_single_speech(db, document_id: str, speech_number: int):
+    """Find a single speech by document_id and speech_number."""
+    return db.speeches.find_one(
+        {"document_id": document_id, "speech_number": speech_number}
+    )
 
 
 def aggregate_speeches_per_party(db, query):

@@ -3,6 +3,7 @@
 from app.repositories.data_repository import (
     count_speeches,
     find_speeches,
+    find_single_speech,
     aggregate_speeches_per_party,
     aggregate_speeches_over_time,
     build_speech_length_pipeline,
@@ -18,6 +19,17 @@ def fetch_speeches(db, filters):
     query = build_speech_query(filters)
     cursor = find_speeches(db, query)
     return list(apply_pagination(cursor, filters["skip"], filters["limit"]))
+
+
+def fetch_single_speech(db, speech_id: str):
+    """Fetch a single speech based on speech_id (document_id_speech_number)."""
+    try:
+        document_id, speech_number = speech_id.rsplit("_", 1)
+        speech_number = int(speech_number)
+    except Exception:
+        raise ValueError("Invalid speech ID format.")
+
+    return find_single_speech(db, document_id, speech_number)
 
 
 def fetch_speech_summaries(db, filters):
@@ -38,6 +50,7 @@ def fetch_speech_summaries(db, filters):
     total = count_speeches(db, query)
 
     return {"items": paginated, "total": total}
+
 
 def fetch_speeches_per_party(db, filters):
     """Return count of speeches grouped by party."""
