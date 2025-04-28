@@ -50,7 +50,7 @@
 </script>
 
 <section class="mx-auto max-w-4xl p-6">
-	<h1 class="mb-6 text-2xl font-bold">RAG Semantic Search</h1>
+	<h1 class="mb-6 text-2xl font-bold">Fråga riksdagsboten 🤖</h1>
 	<p class="mb-2 text-sm text-gray-500">
 		Observera att svaret baseras på ett urval av anföranden från riksdagens kammare och inte
 		nödvändigtvis representerar en fullständig bild av partiets eller personens ståndpunkt.

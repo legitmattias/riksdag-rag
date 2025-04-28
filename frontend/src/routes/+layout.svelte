@@ -11,6 +11,9 @@
 		</div>
 		<nav class="space-y-2 p-4">
 			<a href="/dashboard" class="block rounded px-4 py-2 hover:bg-gray-100">Dashboard</a>
+            <a href="/rag" class="block rounded px-4 py-2 hover:bg-gray-100"
+				>🤖 Riksdagsboten (RAG)</a
+			>
 			<a href="/explore/speech-length" class="block rounded px-4 py-2 hover:bg-gray-100"
 				>Längd per anförande</a
 			>
