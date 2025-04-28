@@ -46,20 +46,20 @@
 			<p class="text-center text-red-500">Fel: {$error}</p>
 		{:else if $speech}
 			<div class="space-y-4">
+				{#if $speech.clause_number !== undefined && $speech.speech_number !== undefined}
+					<div class="mb-2 text-sm text-gray-500">
+						<strong>§ {$speech.clause_number}, Anf. {$speech.speech_number}</strong>
+					</div>
+				{/if}
 				<div class="text-sm text-gray-700">
 					<strong>{$speech.speaker}</strong> ({$speech.party}) — {$speech.date}
 				</div>
-
-				<div class="prose max-w-none">
-					{@html $speech.text.replace(/\n/g, '<br>')}
-				</div>
-
 				<div class="mt-6 space-x-4">
 					{#if $speech.source?.html}
 						<a
 							href={$speech.source.html}
 							target="_blank"
-							class="inline-block rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+							class="inline-block rounded bg-blue-600 px-2 py-1 text-white transition hover:bg-blue-700"
 						>
 							Visa protokoll (HTML)
 						</a>
@@ -68,11 +68,14 @@
 						<a
 							href={$speech.source.pdf.url}
 							target="_blank"
-							class="inline-block rounded bg-green-600 px-4 py-2 text-white transition hover:bg-green-700"
+							class="inline-block rounded bg-green-600 px-2 py-1 text-white transition hover:bg-green-700"
 						>
 							Ladda ned protokoll (PDF)
 						</a>
 					{/if}
+				</div>
+				<div class="prose max-w-none">
+					{@html $speech.text.replace(/\n/g, '<br>')}
 				</div>
 			</div>
 		{/if}
