@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import TableControls from '$components/TableControls.svelte';
 	import PaginationIndicator from '$components/PaginationIndicator.svelte';
+	import SpeechModal from '$components/SpeechModal.svelte';
 
 	type SpeechSummary = {
 		speaker: string;
@@ -11,11 +12,13 @@
 		clause_title: string;
 		speech_number: number;
 		length?: number;
+		document_id: string;
 	};
 
 	let summaries: SpeechSummary[] = [];
 	let isLoading = true;
 	let total = 0;
+	let selectedSpeechId: string | null = null;
 
 	let selectedParty: string | undefined = undefined;
 	let limit = 25;
@@ -84,6 +87,7 @@
 					<th class="px-4 py-2">Datum</th>
 					<th class="px-4 py-2">Rubrik</th>
 					<th class="px-4 py-2">Ord</th>
+					<th class="px-4 py-2 text-center">Visa anförande</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -94,9 +98,21 @@
 						<td class="px-4 py-2">{s.date}</td>
 						<td class="px-4 py-2">{s.clause_title}</td>
 						<td class="px-4 py-2">{s.length ?? '–'}</td>
+						<td class="px-4 py-2 text-center">
+							<button
+								class="rounded bg-blue-600 px-2 py-1 text-xs text-white transition hover:bg-blue-700"
+								on:click={() => (selectedSpeechId = `${s.document_id}_${s.speech_number}`)}
+							>
+								Visa
+							</button>
+						</td>
 					</tr>
 				{/each}
 			</tbody>
 		</table>
 	</div>
+{/if}
+
+{#if selectedSpeechId}
+	<SpeechModal speechId={selectedSpeechId} onClose={() => (selectedSpeechId = null)} />
 {/if}
