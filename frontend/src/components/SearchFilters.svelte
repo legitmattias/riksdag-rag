@@ -67,7 +67,7 @@
 </script>
 
 <div class="max-w-3xl space-y-6">
-	<div class="mb-6 space-y-6 rounded-lg bg-white p-4 ">
+	<div class="mb-6 space-y-6 rounded-lg bg-white p-4">
 		<div>
 			<h3 class="mb-2 text-lg font-semibold">🎤 Talare</h3>
 			<div class="mb-2 flex gap-2">
@@ -160,7 +160,7 @@
 
 		<div>
 			<button
-				class="mt-4 w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+				class="mt-4 w-full rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
 				on:click={applyFilters}
 			>
 				Tillämpa filter
