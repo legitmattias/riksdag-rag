@@ -43,6 +43,7 @@ def fetch_speech_summaries(db, filters):
         "clause_title": 1,
         "speech_number": 1,
         "length": 1,
+        "document_id": 1,
     }
 
     cursor = find_speeches(db, query, projection)
