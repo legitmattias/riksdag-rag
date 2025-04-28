@@ -20,6 +20,7 @@
 	let isLoading = true;
 	let total = 0;
 	let selectedSpeechId: string | null = null;
+	let showFilters = true;
 
 	// Filters state
 	let selectedSpeakers: string[] = [];
@@ -104,7 +105,29 @@
 	onMount(fetchSummaries);
 </script>
 
-<SearchFilters on:update={handleFilterUpdate} />
+<div class="mb-4 flex items-center justify-between">
+	<button
+		class="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+		on:click={() => (showFilters = !showFilters)}
+	>
+		{showFilters ? 'Dölj filter' : 'Visa filter'}
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-4 w-4 transform transition-transform duration-200"
+			fill="none"
+			viewBox="0 0 24 24"
+			stroke="currentColor"
+			stroke-width="2"
+			class:rotate-180={showFilters}
+		>
+			<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+		</svg>
+	</button>
+</div>
+
+{#if showFilters}
+	<SearchFilters on:update={handleFilterUpdate} />
+{/if}
 
 <TableControls
 	selectedParty={selectedParty ?? '__ALL__'}
