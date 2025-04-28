@@ -2,18 +2,22 @@
 
 <script lang="ts">
 	import { writable } from 'svelte/store';
+	import SpeechModal from '$components/SpeechModal.svelte';
 
 	const query = writable('');
 	const answer = writable('');
 	const sources = writable<SourceDocument[]>([]);
 	const loading = writable(false);
 	const error = writable('');
+	const selectedSpeechId = writable<string | null>(null);
 
 	type SourceDocument = {
 		text: string;
 		speaker?: string;
 		party?: string;
 		date?: string;
+		document_id: string;
+		speech_number: number;
 	};
 
 	async function search() {
@@ -21,6 +25,7 @@
 		answer.set('');
 		sources.set([]);
 		error.set('');
+		selectedSpeechId.set(null);
 
 		try {
 			const baseUrl = import.meta.env.VITE_API_RAG;
@@ -46,6 +51,14 @@
 		} finally {
 			loading.set(false);
 		}
+	}
+
+	function openSpeech(documentId: string, speechNumber: number) {
+		selectedSpeechId.set(`${documentId}_${speechNumber}`);
+	}
+
+	function closeSpeech() {
+		selectedSpeechId.set(null);
 	}
 </script>
 
@@ -87,16 +100,28 @@
 	{#if $sources.length > 0}
 		<div>
 			<h2 class="mb-4 text-xl font-semibold">Källor:</h2>
-			<div class="space-y-4">
+			<div class="space-y-6">
 				{#each $sources as source}
 					<div class="rounded-lg bg-white p-4 shadow">
-						<div class="mb-1 text-sm text-gray-500">
+						<div class="mb-2 text-sm text-gray-500">
 							{source.speaker} ({source.party}) — {source.date}
 						</div>
-						<p class="text-gray-700">{source.text}</p>
+						<p class="mb-2 text-gray-700">{source.text}</p>
+						{#if source.document_id && source.speech_number !== undefined}
+							<button
+								class="text-sm text-blue-600 hover:underline"
+								on:click={() => openSpeech(source.document_id, source.speech_number)}
+							>
+								Visa hela anförandet
+							</button>
+						{/if}
 					</div>
 				{/each}
 			</div>
 		</div>
+	{/if}
+
+	{#if $selectedSpeechId}
+		<SpeechModal speechId={$selectedSpeechId} onClose={closeSpeech} />
 	{/if}
 </section>
