@@ -4,6 +4,7 @@
 	import TableControls from '$components/TableControls.svelte';
 	import PaginationIndicator from '$components/PaginationIndicator.svelte';
 	import SpeechModal from '$components/SpeechModal.svelte';
+	import SearchFilters from '$components/SearchFilters.svelte';
 
 	type SpeechSummary = {
 		speaker: string;
@@ -20,6 +21,13 @@
 	let total = 0;
 	let selectedSpeechId: string | null = null;
 
+	// Filters state
+	let selectedSpeakers: string[] = [];
+	let selectedTopics: string[] = [];
+	let matchAllTopics: boolean = false;
+	let startDate: string = '';
+	let endDate: string = '';
+
 	let selectedParty: string | undefined = undefined;
 	let limit = 25;
 	let skip = 0;
@@ -33,6 +41,25 @@
 			if (selectedParty !== undefined) {
 				url.searchParams.set('party', selectedParty);
 			}
+			if (selectedSpeakers.length > 0) {
+				for (const speaker of selectedSpeakers) {
+					url.searchParams.append('speaker', speaker);
+				}
+			}
+			if (selectedTopics.length > 0) {
+				for (const topic of selectedTopics) {
+					url.searchParams.append('clause_title', topic);
+				}
+			}
+			if (matchAllTopics) {
+				url.searchParams.set('match_all', 'true');
+			}
+			if (startDate) {
+				url.searchParams.set('start_date', startDate);
+			}
+			if (endDate) {
+				url.searchParams.set('end_date', endDate);
+			}
 
 			const res = await fetch(url);
 			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
@@ -44,6 +71,18 @@
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	function handleFilterUpdate(event: CustomEvent) {
+		const detail = event.detail;
+		selectedSpeakers = detail.speakers || [];
+		selectedTopics = detail.topics || [];
+		matchAllTopics = detail.matchAll || false;
+		startDate = detail.start_date || '';
+		endDate = detail.end_date || '';
+
+		skip = 0; // Reset to first page when filters change
+		fetchSummaries();
 	}
 
 	function updateFilters(event: CustomEvent) {
@@ -64,6 +103,8 @@
 
 	onMount(fetchSummaries);
 </script>
+
+<SearchFilters on:update={handleFilterUpdate} />
 
 <TableControls
 	selectedParty={selectedParty ?? '__ALL__'}
