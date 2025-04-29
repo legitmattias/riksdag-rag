@@ -38,6 +38,8 @@ The project is based on 338 parsed chamber protocols from 2022–2025, with pote
 - **LLM:** OpenAI `gpt-3.5-turbo`
 - **Other:** Eslint, Prettier, Docker Compose, Python Scripts
 
+Note that the ChromaDB (`chroma_storage`) in the repo is a small test dataset with only 1000 speeches, compared to the full 33k speeches database. The full dataset is generated during the pipeline seeding process and is not included in the repository. This is to avoid versioning large files and to keep the repository size manageable, since the larger dataset is is 952MB in size and not needed to test the application. To generate the full dataset, follow the instructions in the **Data Pipeline and Seeding** section below.
+
 ---
 
 ## Setup Instructions
