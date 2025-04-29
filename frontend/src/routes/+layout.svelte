@@ -26,9 +26,12 @@
 		</nav>
 	</aside>
 
-	<!-- Main content -->
-	<main class="flex-1 p-4 md:p-6">
-		<div class="rounded bg-blue-100 p-4 text-blue-800">This should be styled</div>
-		<slot />
-	</main>
+<!-- Main content -->
+<main class="flex-1 p-4 md:p-6">
+	<div class="mb-6 rounded-lg bg-blue-50 p-4 text-blue-800 shadow-sm">
+		<h2 class="text-xl font-semibold">Riksdagsdata — Datavisualisering för WT2</h2>
+	</div>
+	<slot />
+</main>
+
 </div>
