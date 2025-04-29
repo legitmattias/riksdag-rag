@@ -8,6 +8,7 @@ router = APIRouter()
 
 @router.post("/rag/query", response_model=RAGQueryResponse)
 async def rag_query(request: RAGQueryRequest):
+    """Handle RAG-based query to generate an answer and retrieve source documents."""
     result = generate_answer(request.query, request.top_k)
     return RAGQueryResponse(
         answer=result["answer"],
