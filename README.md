@@ -10,6 +10,14 @@ The application enables users to:
 
 The project is based on 338 parsed chamber protocols from 2022–2025, with potential for easy expansion to additional years.
 
+---
+
+## Links
+- **Deployed Application:** [https://cscloud6-198.lnu.se/wt2/](https://cscloud6-198.lnu.se/wt2/)
+- **Development Repository:** [https://gitlab.lnu.se/mu222cu/wt2-dev](https://gitlab.lnu.se/mu222cu/wt2-dev)
+
+---
+
 ## Features
 - Structured REST API for speech metadata, content, and statistical aggregations.
 - RAG functionality combining ChromaDB vector search and OpenAI GPT-3.5-turbo.
@@ -156,6 +164,46 @@ This enables users to ask flexible, high-level questions about the dataset.
 - "How often was climate change discussed in 2023?"
 - "Which parties supported nuclear power in 2024?"
 - "Summarize the debates about electric vehicles."
+- "Who spoke the most about healthcare in 2022?"
+
+---
+
+## Additional Features and Assignment Requirements
+
+This project fulfills and exceeds the WT2 assignment requirements in several ways:
+
+### Backend Enhancements
+- Implemented an extensive set of REST endpoints under `/data`, `/meta`, and `/search`, far beyond the basic requirements.
+- Each endpoint supports a variety of filters (speaker, party, date, clause title, etc.) and pagination options, allowing powerful and flexible data access.
+
+### Frontend Enhancements
+- Developed multiple interactive visualizations using Chart.js, each with dynamic filtering and/or pagination.
+- Designed a clean, responsive UI with thoughtful UX details such as:
+  - Party-colored charts for clarity.
+  - Date pickers for range-based data exploration.
+  - Dropdown filtering in the summarized speeches table.
+  - Tooltips and labels for enhanced readability.
+  - A dedicated "Speech Modal" for viewing complete speeches, including direct links to the original parliamentary protocols (HTML and PDF versions).
+
+### Data Pipeline and Custom Dataset Creation
+- Created a custom dataset by parsing and cleaning raw parliamentary protocols from Riksdagen's open data portal.
+- Built a sophisticated preprocessing pipeline that:
+  - Extracts and structures thousands of speeches from messy HTML-embedded metadata.
+  - Outputs clean, structured JSON datasets used for seeding MongoDB and ChromaDB.
+
+This ensures that the visualizations are based on rich, real-world, and correctly processed data, rather than using generic example datasets.
+
+### Automation and Project Scripts
+- Provided `init.sh` and `start_prod.sh` scripts to automate environment setup, Docker service management, and server startup.
+- Designed the pipeline scripts to run independently in sequence, making it easy to preprocess, seed, and embed new data.
+
+### RAG (Retrieval-Augmented Generation) Implementation (Optional VG Enhancement)
+- Implemented a full RAG pipeline:
+  - Speech data is split into manageable text chunks based on token limits.
+  - Each chunk is embedded using OpenAI's `text-embedding-ada-002`.
+  - Chunks are seeded into a local ChromaDB instance, with metadata attached.
+  - Duplicate prevention and checkpointing are implemented to ensure robustness during seeding.
+  - Users can submit free-text queries, retrieving semantically relevant speeches and generating an answer via `gpt-3.5-turbo`.
 
 ---
 
