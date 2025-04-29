@@ -160,9 +160,10 @@ This enables users to ask flexible, high-level questions about the dataset.
 
 ### Example Queries:
 - "Vad tycker Moderaterna om kärnkraft?"
-- "Vilka talare har pratat mest om klimatförändringar?"
-- "Hur många tal har Socialdemokraterna hållit under 2023?"
 - "Vad sa talmannen om budgeten i januari 2024?"
+- "Vilka talare har pratat mest om klimatet?"
+- "Vad sa Magdalena Andersson om skatter i oktober 2023?"
+- "Vad tycker Sverigedemokraterna om invandring?"
 
 ---
 
