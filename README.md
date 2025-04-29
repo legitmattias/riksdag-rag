@@ -10,13 +10,9 @@ The application enables users to:
 
 The project is based on 338 parsed chamber protocols from 2022–2025, with potential for easy expansion to additional years.
 
----
-
 ## Links
 - **Deployed Application:** [https://cscloud6-198.lnu.se/wt2/](https://cscloud6-198.lnu.se/wt2/)
 - **Development Repository:** [https://gitlab.lnu.se/mu222cu/wt2-dev](https://gitlab.lnu.se/mu222cu/wt2-dev)
-
----
 
 ## Features
 - Structured REST API for speech metadata, content, and statistical aggregations.
