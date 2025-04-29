@@ -46,7 +46,6 @@ docker-compose.override.yml
 !*.example
 
 # ─── Misc ─────────────────────────────────────────────────
-*.sqlite3
 *.db
 *.bak
 *.tar.gz
