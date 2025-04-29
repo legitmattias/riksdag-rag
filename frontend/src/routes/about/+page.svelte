@@ -18,7 +18,11 @@
 	</ul>
 
 	<p class="mb-6">
-		Datasetet är baserat på officiella kammarprotokoll från 2022 till 2025, hämtade från <a href="https://www.riksdagen.se/sv/dokument-och-lagar/riksdagens-oppna-data/">Riksdagens öppna dataportal</a>. Applikationen erbjuder både sammanfattningar och direktlänkar till de fullständiga protokollen.
+		Datasetet är baserat på officiella kammarprotokoll från 2022 till 2025, hämtade från <a
+			href="https://www.riksdagen.se/sv/dokument-och-lagar/riksdagens-oppna-data/"
+			>Riksdagens öppna dataportal</a
+		>. Applikationen erbjuder både sammanfattningar och direktlänkar till de fullständiga
+		protokollen.
 	</p>
 
 	<p class="mb-8 text-sm text-gray-600">
