@@ -4,6 +4,6 @@
 	import SpeechesOverTimeChart from '$components/SpeechesOverTimeChart.svelte';
 </script>
 
-<ChartContainer title="Anföranden över tid">
+<ChartContainer title="Anföranden över tid" reduced={true}>
 	<SpeechesOverTimeChart />
 </ChartContainer>

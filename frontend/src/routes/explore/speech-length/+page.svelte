@@ -4,6 +4,6 @@
 	import PartySpeechLengthChart from '$components/PartySpeechLengthChart.svelte';
 </script>
 
-<ChartContainer title="Längd på anföranden per parti">
+<ChartContainer title="Längd på anföranden per parti" reduced={true}>
 	<PartySpeechLengthChart />
 </ChartContainer>

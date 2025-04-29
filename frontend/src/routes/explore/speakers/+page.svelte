@@ -4,6 +4,6 @@
 	import TopSpeakersChart from '$components/TopSpeakersChart.svelte';
 </script>
 
-<ChartContainer title="Mest aktiva talare (anföranden)">
+<ChartContainer title="Mest aktiva talare (anföranden)" reduced={true}>
 	<TopSpeakersChart />
 </ChartContainer>

@@ -9,14 +9,14 @@
 
 <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
 	<ChartContainer title="Längd på anföranden per parti">
-		<PartySpeechLengthChart minimal={true} />
-	</ChartContainer>
-
-	<ChartContainer title="Mest aktiva talare (anföranden)">
-		<TopSpeakersChart minimal={true} limit={10} />
-	</ChartContainer>
-
-	<ChartContainer title="Anföranden per år">
-		<SpeechesOverTimeChart minimal={true} />
-	</ChartContainer>
+        <PartySpeechLengthChart minimal={true} />
+    </ChartContainer>
+    
+    <ChartContainer title="Mest aktiva talare (anföranden)">
+        <TopSpeakersChart minimal={true} limit={10} />
+    </ChartContainer>
+    
+    <ChartContainer title="Anföranden per år">
+        <SpeechesOverTimeChart minimal={true} />
+    </ChartContainer>    
 </div>
