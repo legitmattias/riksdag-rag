@@ -24,7 +24,7 @@ The project is based on 338 parsed chamber protocols from 2022–2025, with pote
 - **Längd per anförande:** Graph showing average length (number of words) per speech for each party, colored by party color. Date range filtering with date pickers.
 - **Aktiva talare:** Top speakers visualization showing speakers ranked by number of speeches.
 - **Anföranden över tid:** Graph displaying how many speeches each party made per year. Date range filtering enabled. Colored by party.
-- **Översikt över anföranden:** Paginated table (10/25/50 per page) showing summarized speech metadata. Each row links to the full speech modal, with further links to the full protocol in HTML or PDF.
+- **Översikt över anföranden:** Paginated table (10/25/50 per page) showing summarized speech metadata, filtered by party using a drowndown. Each row links to the full speech modal, with further links to the full protocol in HTML or PDF.
 
 ## Tech Stack
 - **Frontend:** SvelteKit, TypeScript, TailwindCSS, Vite, Chart.js
