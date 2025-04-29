@@ -26,7 +26,7 @@ dist/
 pipeline/raw/*
 !pipeline/raw/
 pipeline/parsed/
-pipeline/data/
+# pipeline/data/
 pipeline/embeddings/
 pipeline/chroma_storage*/
 pipeline/upload_checkpoint*.txt
