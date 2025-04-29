@@ -143,7 +143,7 @@ Raw data can be downloaded from [Riksdagens öppna data](https://www.riksdagen.s
     }
     ```
 
-> Full interactive docs: [Swagger UI](http://localhost:8000/docs)
+> Full interactive docs (when backend runs): [Swagger UI](http://localhost:8000/docs)
 
 ---
 
@@ -157,10 +157,10 @@ Raw data can be downloaded from [Riksdagens öppna data](https://www.riksdagen.s
 This enables users to ask flexible, high-level questions about the dataset.
 
 ### Example Queries:
-- "How often was climate change discussed in 2023?"
-- "Which parties supported nuclear power in 2024?"
-- "Summarize the debates about electric vehicles."
-- "Who spoke the most about healthcare in 2022?"
+- "Vad tycker Moderaterna om kärnkraft?"
+- "Vilka talare har pratat mest om klimatförändringar?"
+- "Hur många tal har Socialdemokraterna hållit under 2023?"
+- "Vad sa talmannen om budgeten i januari 2024?"
 
 ---
 
