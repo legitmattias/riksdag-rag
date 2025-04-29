@@ -1,5 +1,7 @@
 # /pipeline/chroma_check.py
 
+"""This script tests the ChromaDB collection after a test seed by checking the number of embedded chunks and retrieving a sample of stored documents along with their metadata for verification."""
+
 import chromadb
 
 def main():

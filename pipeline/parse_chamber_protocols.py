@@ -1,3 +1,15 @@
+# /pipeline/parse_chamber_protocols.py
+
+"""
+This script processes chamber protocol JSON files to extract structured data.
+
+It parses raw HTML content to identify and mark structural elements such as clauses and speeches. The script then extracts metadata, clause titles, and speech content, normalizing and cleaning the data.
+
+Outputs:
+1. protocols.json - Contains metadata and clause information for each protocol.
+2. speeches.json - Contains detailed speech data, including speaker, party, and speech text.
+"""
+
 import os
 import json
 import re

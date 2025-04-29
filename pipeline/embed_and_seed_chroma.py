@@ -1,5 +1,19 @@
 # /pipeline/embed_and_seed_chroma.py
 
+"""
+This script processes speech data, embeds it using OpenAI's embedding model, and seeds it into a ChromaDB collection.
+
+It performs the following tasks:
+1. Loads speech data from a JSON file.
+2. Splits speech text into manageable chunks based on token limits.
+3. Embeds the text chunks using OpenAI's text-embedding-ada-002 model.
+4. Filters out duplicate entries and logs them.
+5. Uploads the embedded chunks, along with metadata, to a ChromaDB collection.
+6. Implements rate limiting to comply with OpenAI's token usage limits.
+
+The script supports checkpointing to resume interrupted uploads and logs progress for verification.
+"""
+
 import os
 import json
 import chromadb

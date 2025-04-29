@@ -1,3 +1,18 @@
+# /pipeline/seed_mongodb.py
+
+"""
+This script seeds a MongoDB database with data from parsed JSON files.
+
+It performs the following tasks:
+1. Loads protocol and speech data from `protocols.json` and `speeches.json`.
+2. Connects to a MongoDB database using credentials from an `.env` file.
+3. Clears existing data in the `protocols` and `speeches` collections.
+4. Inserts the loaded data into the respective MongoDB collections.
+5. Provides progress updates during the seeding process.
+
+The script ensures the database is populated with up-to-date data for further use.
+"""
+
 import os
 import json
 from pymongo import MongoClient
