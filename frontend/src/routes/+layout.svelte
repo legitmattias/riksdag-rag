@@ -23,15 +23,15 @@
 			<a href="/explore/summaries" class="block rounded px-4 py-2 hover:bg-gray-100"
 				>Översikt över anföranden</a
 			>
+			<a href="/about" class="block rounded px-4 py-2 hover:bg-gray-100">Om</a>
 		</nav>
 	</aside>
 
-<!-- Main content -->
-<main class="flex-1 p-4 md:p-6">
-	<div class="mb-6 rounded-lg bg-blue-50 p-4 text-blue-800 shadow-sm">
-		<h2 class="text-xl font-semibold">Riksdagsdata — Datavisualisering för WT2</h2>
-	</div>
-	<slot />
-</main>
-
+	<!-- Main content -->
+	<main class="flex-1 p-4 md:p-6">
+		<div class="mb-6 rounded-lg bg-blue-50 p-4 text-blue-800 shadow-sm">
+			<h2 class="text-xl font-semibold">Riksdagsdata — Datavisualisering för WT2</h2>
+		</div>
+		<slot />
+	</main>
 </div>
