@@ -47,7 +47,7 @@ cd ..
 # 9. Start frontend in development mode
 echo "🔵 Installing frontend dependencies and starting Vite dev server..."
 cd frontend
-npm install
+npm install --legacy-peer-deps
 npm run dev -- --host 0.0.0.0 --port 3000 &
 FRONTEND_PID=$!
 cd ..
