@@ -1,4 +1,4 @@
-# WT2 - Parliamentary Debates Analysis and Semantic Search
+# Riksdag RAG — Parliamentary Debates Analysis and Semantic Search
 
 ## Project Description
 This project is an interactive web application for exploring and analyzing speeches from the Swedish Parliament (Riksdagen). It includes a backend built with FastAPI for structured data access and semantic search, and a SvelteKit frontend for dynamic visualizations and user interaction.
@@ -12,7 +12,6 @@ The project is based on 338 parsed chamber protocols from 2022–2025, with pote
 
 ## Links
 - **Deployed Application:** [https://cscloud6-198.lnu.se/wt2/](https://cscloud6-198.lnu.se/wt2/)
-- **Development Repository:** [https://gitlab.lnu.se/mu222cu/wt2-dev](https://gitlab.lnu.se/mu222cu/wt2-dev)
 
 ## Features
 - Structured REST API for speech metadata, content, and statistical aggregations.
@@ -211,4 +210,4 @@ This project uses publicly available data from [Riksdagens öppna data](https://
 
 Licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
-> Educational project for 1DV027 - Web for Data Science, Linnaeus University, 2025.
+> Educational project for the Web as Application Platform course, Linnaeus University, 2025.
